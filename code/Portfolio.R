@@ -33,17 +33,17 @@ combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
 combinedData <- as.xts(combinedData[,2:13],combinedData[,1])
 rm(result, result1, imputed_Data)
 # Portfolio ----
-GSoC <- colnames(combinedData)
-pspec <- portfolio.spec(assets = GSoC)
+CTAs <- colnames(combinedData)
+GSoC <- portfolio.spec(assets = CTAs)
 # make a no leverage, long only portfolio based on given 12 CTAs
-pspec <- add.constraint(portfolio=pspec, type="full_investment")
-pspec <- add.constraint(portfolio=pspec, type="long_only")
-pspec <- add.constraint(portfolio = pspec, type="position_limit", max_pos=10)
+GSoC <- add.constraint(portfolio = GSoC, type = "full_investment")
+GSoC <- add.constraint(portfolio = GSoC, type = "long_only")
+GSoC <- add.constraint(portfolio = GSoC, type = "position_limit", max_pos=10)
 # we want to maximine return per sd
-pspec <- add.objective(pspec, type="return", name="mean")
-pspec <- add.objective(pspec, type="risk", name="StdDev")
+GSoC <- add.objective(GSoC, type = "return", name = "mean")
+GSoC <- add.objective(GSoC, type = "risk", name = "StdDev")
 
-portfolioDetail <- optimize.portfolio.rebalancing(R=combinedData, pspec,rebalance_on='months',
+portfolioDetail <- optimize.portfolio.rebalancing(R = combinedData, GSoC,rebalance_on='months',
                                                  training_period = 12)
 
 weights <- extractWeights(portfolioDetail)
