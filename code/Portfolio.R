@@ -23,8 +23,10 @@ library(testthat)
 library(nloptr)
 library(MASS)
 library(robustbase)
+library(mice)
+library(ggplot2)
 # Data----
-result <- read.csv(".combined.csv")
+result <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/.combined.csv")
 result1 <- result[,2:13]
 imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500)
 result[,2:13] <- complete(imputed_Data)
@@ -32,21 +34,56 @@ combinedData <- result
 combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
 combinedData <- as.xts(combinedData[,2:13],combinedData[,1])
 rm(result, result1, imputed_Data)
-# Portfolio ----
+# CTA Portfolio ----
 CTAs <- colnames(combinedData)
-GSoC <- portfolio.spec(assets = CTAs)
+GSoC.CTA <- portfolio.spec(assets = CTAs)
 # make a no leverage, long only portfolio based on given 12 CTAs
-GSoC <- add.constraint(portfolio = GSoC, type = "full_investment")
-GSoC <- add.constraint(portfolio = GSoC, type = "long_only")
-GSoC <- add.constraint(portfolio = GSoC, type = "position_limit", max_pos=10)
+GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "full_investment")
+GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
+GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "position_limit", max_pos = 10)
 # we want to maximine return per sd
-GSoC <- add.objective(GSoC, type = "return", name = "mean")
-GSoC <- add.objective(GSoC, type = "risk", name = "StdDev")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'quarters',
+                                                      optimize_method = "DEoptim", training_period = 12)
+return.CTA <- Return.rebalancing(R = combinedData, weights=extractWeights(portfolioDetail.CTA))
+# ETF Portfolio----
+combinedData <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/..return.sample.ETF.monthly.csv")
+combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
+combinedData <- as.xts(combinedData[,-1],combinedData[,1])
+ETFs <- colnames(combinedData)
+GSoC.ETF <- portfolio.spec(assets = ETFs)
+# make a no leverage, long only portfolio based on given ETF universal
+GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "full_investment")
+GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "long_only")
+GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "position_limit", max_pos = 10)
+GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type="box", min = 0, max = 0.3)
+# we want to maximine return per sd
+GSoC.ETF <- add.objective(GSoC.ETF, type = "return", name = "mean")
+GSoC.ETF <- add.objective(GSoC.ETF, type = "risk", name = "StdDev")
+portfolioDetail.ETF <- optimize.portfolio.rebalancing(R = combinedData, GSoC.ETF,optimize_method = "DEoptim", 
+                                                      rebalance_on = 'quarters', training_period = 12)
+return.ETF <- Return.rebalancing(R = combinedData, weights=extractWeights(portfolioDetail.ETF))
+# Comparison to S&P 500 ----
+SP <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/..return.gspc.monthly.csv")
+SP[,1] <- as.Date(as.character(SP[,1]), format='%m/%d/%Y')
+SP <- as.xts(SP[,2],SP[,1])
+comparison <- c()
+comparison <- cbind(SP["2015/20190201"],return.ETF,return.CTA)
+colnames(comparison) <- c("S&P", "ETF Portfolio", "CTA Portfolio")
 
-portfolioDetail <- optimize.portfolio.rebalancing(R = combinedData, GSoC,rebalance_on='months',
-                                                 training_period = 12)
+colors <- rainbow(3)
+png(file="C:/Users/Shawn/Documents/GitHub/GSoC/result/MonthlyReturn.png", width = 1000, height = 500, units = "px")
+plot(comparison, ylim = c(-0.2,0.2), col = colors, main = "Monthly Return")
+addLegend("topright", colnames(comparison), lty = 1, col=colors)
+dev.off()
 
-weights <- extractWeights(portfolioDetail)
-returns <- Return.rebalancing(R=combinedData, weights=extractWeights(portfolioDetail))
+png(file="C:/Users/Shawn/Documents/GitHub/GSoC/result/CumulativeReturn.png", width = 1000, height = 500, units = "px")
+plot(cumsum(comparison), col = colors, main = "Cumulative Return")
+addLegend("topleft", colnames(comparison), lty = 1, col=colors)
+dev.off()
+
+
+
 
 
