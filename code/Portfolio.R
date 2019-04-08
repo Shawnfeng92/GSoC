@@ -5,32 +5,16 @@
 #
 
 # Depended Packages
-library(PortfolioAnalytics)
-library(zoo)
-library(xts)
-library(rootSolve)
-library(foreach)
-library(PerformanceAnalytics)
+library(PortfolioAnalytics, zoo, xts)
+library(foreach, rootSolve, PerformanceAnalytics)
 # Suggested Packages
 library(quantmod)
-library(DEoptim)
-library(iterators)
-library(fGarch)
-library(Rglpk)
-library(quadprog)
-library(ROI)
-library(ROI.plugin.glpk)
-library(ROI.plugin.quadprog)
-library(ROI.plugin.symphony)
-library(pso)
-library(GenSA)
-library(corpcor)
-library(testthat)
-library(nloptr)
-library(MASS)
-library(robustbase)
-library(mice)
-library(ggplot2)
+library(DEoptim, fGarch, iterators)
+library(Rglpk, ROI, quadprog)
+library(ROI.plugin.quadprog, ROI.plugin.symphony, ROI.plugin.glpk)
+library(GenSA, pso, ggplot2)
+library(corpcor, testthat, nloptr)
+library(MASS, robustbase, mice)
 
 # Intermediate Test----
 # 
