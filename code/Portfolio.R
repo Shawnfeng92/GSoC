@@ -30,7 +30,7 @@ library(mice)
 # Data
 result <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/.combined.csv")
 result1 <- result[,2:13]
-imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500)
+imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500, printFlag = FALSE)
 result[,2:13] <- complete(imputed_Data)
 combinedData <- result
 combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
@@ -94,7 +94,7 @@ dev.off()
 
 # Hard Test ----
 #
-# In this test, I will use solver in quadprog to creat a optimal portfolio
+# In this test, I will use solver in quadprog to creat an optimal portfolio
 # based on ETF data from 2013-11-01 to 2019-02-01. If it works, we can easily
 # do a parameter transform and implement it to PortfolioAnalytics.
 #
@@ -109,8 +109,6 @@ solQP <- solve.QP(Dmat = cov(combinedData),
                   meq = 0)
 
 w <- as.matrix(solQP$solution/sum(solQP$solution))
-print(round(w,4))
-
 
 # Then, let's forbidden ETF short selling:
 AmatNS <- cbind(as.matrix(apply(combinedData, 2, mean)),diag(1,nAsset))
@@ -123,6 +121,5 @@ solQP <- solve.QP(Dmat = cov(combinedData),
                   meq = 0)
 
 w <- as.matrix(solQP$solution/sum(solQP$solution))
-print(round(w,4))
 
 
