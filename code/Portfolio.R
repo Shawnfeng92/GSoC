@@ -5,16 +5,20 @@
 #
 
 # Depended Packages
-library(PortfolioAnalytics, zoo, xts)
-library(foreach, rootSolve, PerformanceAnalytics)
+library(PortfolioAnalytics, PerformanceAnalytics)
+library(zoo, xts)
+library(foreach, rootSolve)
 # Suggested Packages
-library(quantmod)
-library(DEoptim, fGarch, iterators)
-library(Rglpk, ROI, quadprog)
-library(ROI.plugin.quadprog, ROI.plugin.symphony, ROI.plugin.glpk)
-library(GenSA, pso, ggplot2)
-library(corpcor, testthat, nloptr)
-library(MASS, robustbase, mice)
+library(quantmod, DEoptim)
+library(fGarch, iterators)
+library(Rglpk, ROI)
+library(ROI.plugin.quadprog, ROI.plugin.symphony)
+library(ROI.plugin.glpk, quadprog)
+library(GenSA, pso)
+library(corpcor, testthat)
+library(nloptr, ggplot2)
+library(MASS, robustbase)
+library(mice)
 
 # Intermediate Test----
 # 
@@ -108,7 +112,7 @@ w <- as.matrix(solQP$solution/sum(solQP$solution))
 print(round(w,4))
 
 
-# Then, let's forbiden ETF short selling:
+# Then, let's forbidden ETF short selling:
 AmatNS <- cbind(as.matrix(apply(combinedData, 2, mean)),diag(1,nAsset))
 bvecNS <- c(1,rep(0,nAsset))
 
