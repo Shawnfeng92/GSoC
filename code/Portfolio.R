@@ -1,14 +1,6 @@
-# Easy Test ----
-#
-# In this part, I have already instralled all package locally, so I
-# can call them and use them by function library()
-#
-
-# Depended Packages
 library(PortfolioAnalytics, PerformanceAnalytics)
 library(zoo, xts)
 library(foreach, rootSolve)
-# Suggested Packages
 library(quantmod, DEoptim)
 library(fGarch, iterators)
 library(Rglpk, ROI)
@@ -19,16 +11,13 @@ library(corpcor, testthat)
 library(nloptr, ggplot2)
 library(MASS, robustbase)
 library(mice)
+library(quadprog)
+library(osqp)
 
-# Intermediate Test----
-# 
-# In this test, I will use PortfolioAnalytics to make two quarterly rebalanced
-# pofolio based on ETF and CTA universal. Then observe their monthly return and
-# compare to return of S&P 500.
-#
- 
+source("C:/Users/xf10/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+
 # Data
-result <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/.combined.csv")
+result <- read.csv("C:/Users/xf10/Documents/GitHub/GSoC/data/.combined.csv")
 result1 <- result[,2:13]
 imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500, printFlag = FALSE)
 result[,2:13] <- complete(imputed_Data)
@@ -49,77 +38,28 @@ GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "position_limit", max_po
 # we want to maximine return per sd
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
-portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'quarters',
-                                                      optimize_method = "DEoptim", training_period = 12)
-return.CTA <- Return.rebalancing(R = combinedData, weights=extractWeights(portfolioDetail.CTA))
+start <- Sys.time()
+portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'years',
+                                                      optimize_method = "osqp")
+start-Sys.time()
 
-# ETF Portfolio
-combinedData <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/..return.sample.ETF.monthly.csv")
-combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
-combinedData <- as.xts(combinedData[,-1],combinedData[,1])
-ETFs <- colnames(combinedData)
-GSoC.ETF <- portfolio.spec(assets = ETFs)
 
-# make a no leverage, long only portfolio based on given ETF universal
-GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "full_investment")
-GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "long_only")
-GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type = "position_limit", max_pos = 10)
-GSoC.ETF <- add.constraint(portfolio = GSoC.ETF, type="box", min = 0, max = 0.3)
 
-# we want to maximine return per sd
-GSoC.ETF <- add.objective(GSoC.ETF, type = "return", name = "mean")
-GSoC.ETF <- add.objective(GSoC.ETF, type = "risk", name = "StdDev")
-portfolioDetail.ETF <- optimize.portfolio.rebalancing(R = combinedData, GSoC.ETF,optimize_method = "DEoptim", 
-                                                      rebalance_on = 'quarters', training_period = 12)
-return.ETF <- Return.rebalancing(R = combinedData, weights=extractWeights(portfolioDetail.ETF))
+nA <- ncol(combinedData)      # number of assets
+mu <- -1 * apply(combinedData, 2, mean)             # means
+P <- 2 * cov(combinedData)                         # covariance matrix
 
-# Comparison to S&P 500 
-SP <- read.csv("C:/Users/Shawn/Documents/GitHub/GSoC/data/..return.gspc.monthly.csv")
-SP[,1] <- as.Date(as.character(SP[,1]), format='%m/%d/%Y')
-SP <- as.xts(SP[,2],SP[,1])
-comparison <- c()
-comparison <- cbind(SP["2015/20190201"],return.ETF,return.CTA)
-colnames(comparison) <- c("S&P", "ETF Portfolio", "CTA Portfolio")
+# A is the constraint matrix
+A <- rbind(rep(1, nA), diag(1, nA))
 
-colors <- rainbow(3)
-png(file="C:/Users/Shawn/Documents/GitHub/GSoC/result/MonthlyReturn.png", width = 1000, height = 500, units = "px")
-plot(comparison, ylim = c(-0.2,0.2), col = colors, main = "Monthly Return")
-addLegend("topright", colnames(comparison), lty = 1, col=colors)
-dev.off()
+# These are upper and lower bound
+u <- c(1, rep(1, 12))
+l <- c(1, rep(0, 12))
 
-png(file="C:/Users/Shawn/Documents/GitHub/GSoC/result/CumulativeReturn.png", width = 1000, height = 500, units = "px")
-plot(cumsum(comparison), col = colors, main = "Cumulative Return")
-addLegend("topleft", colnames(comparison), lty = 1, col=colors)
-dev.off()
+# Solve the min variance for later use
+q <- t(rep(0, nA))
 
-# Hard Test ----
-#
-# In this test, I will use solver in quadprog to creat an optimal portfolio
-# based on ETF data from 2013-11-01 to 2019-02-01. If it works, we can easily
-# do a parameter transform and implement it to PortfolioAnalytics.
-#
-
-# First, if we allow short ETF:
-nAsset <- ncol(combinedData)
-
-solQP <- solve.QP(Dmat = cov(combinedData), 
-                  dvec = rep(0, nAsset),
-                  Amat = as.matrix(apply(combinedData, 2, mean)),
-                  bvec = 1,
-                  meq = 0)
-
-w <- as.matrix(solQP$solution/sum(solQP$solution))
-
-# Then, let's forbidden ETF short selling:
-AmatNS <- cbind(as.matrix(apply(combinedData, 2, mean)),diag(1,nAsset))
-bvecNS <- c(1,rep(0,nAsset))
-
-solQP <- solve.QP(Dmat = cov(combinedData), 
-                  dvec = rep(0, nAsset),
-                  Amat = AmatNS,
-                  bvec = bvecNS,
-                  meq = 0)
-
-w <- as.matrix(solQP$solution/sum(solQP$solution))
+solQP <- solve_osqp(P, q, A, l, u, par = osqpSettings(eps_abs = 1))
+solQP$x
 
 
