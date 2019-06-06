@@ -14,10 +14,10 @@ library(mice)
 library(quadprog)
 library(osqp)
 
-source("C:/Users/xf10/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
 # Data
-result <- read.csv("C:/Users/xf10/Documents/GitHub/GSoC/data/.combined.csv")
+result <- read.csv("~/GitHub/GSoC/data/.combined.csv")
 result1 <- result[,2:13]
 imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500, printFlag = FALSE)
 result[,2:13] <- complete(imputed_Data)
