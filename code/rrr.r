@@ -1,7 +1,7 @@
 
 library(osqp)
+data <- read.csv(file = "aaa.csv")[,2:13]
 why <- function(n){
-  data <- read.csv(file = "aaa.csv")[,2:13]
 
   P <- as.matrix(data[1:12,], 12)
   q <- data[13,]
