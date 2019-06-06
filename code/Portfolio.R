@@ -39,8 +39,8 @@ GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "position_limit", max_po
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 start <- Sys.time()
-portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'years',
-                                                      optimize_method = "osqp")
+portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'months',
+                                                      optimize_method = "osqp", training_period = 12)
 start-Sys.time()
 
 
