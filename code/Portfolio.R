@@ -14,52 +14,41 @@ library(mice)
 library(quadprog)
 library(osqp)
 
-source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-
 # Data
-result <- read.csv("~/GitHub/GSoC/data/.combined.csv")
-result1 <- result[,2:13]
-imputed_Data <- mice(result1, m=1, maxit = 50, method = 'pmm', seed = 500, printFlag = FALSE)
-result[,2:13] <- complete(imputed_Data)
-combinedData <- result
-combinedData[,1] <- as.Date(as.character(combinedData[,1]), format='%m/%d/%Y')
-combinedData <- as.xts(combinedData[,2:13],combinedData[,1])
-rm(result, result1, imputed_Data)
+test <- function(method){
+  result <- read.csv("~/GitHub/GSoC/data/.combined.csv")
+  result <- xts(result[,2:13], order.by = as.Date(as.character(result[,1]), format = "%m/%d/%Y"))
+  
+  source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+  
+  CTAs <- colnames(result)
+  GSoC.CTA <- portfolio.spec(assets = CTAs)
+  
+  GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = 0.95, max_sum = 1.05)
+  GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
+  # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "turnover", turnover_target = 0.5)
+  # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "diversification", div_target = 0.7)
+  # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "position__limit", 6)
+  # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "return", return_target = 0.02)
+  # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "leverage_exposure", leverage=1.6)
+  
+  GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
+  GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+  
+  start <- Sys.time()
+  final <- optimize.portfolio(R = result, GSoC.CTA, optimize_method = method, verbos = 0)
+  start <- Sys.time() - start
+  p <- result %*% final$weights
+  
+  print(method)
+  print(paste0("Sharpe Ratio = ",round(mean(p) / sd(p),2)))
+  print(paste0("sum = ", sum(final$weights)))
+  print(start)
+}
 
-# CTA Portfolio 
-CTAs <- colnames(combinedData)
-GSoC.CTA <- portfolio.spec(assets = CTAs)
+mlist <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 
-# make a no leverage, long only portfolio based on given 12 CTAs
-GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "full_investment")
-GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
-GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "position_limit", max_pos = 10)
-
-# we want to maximine return per sd
-GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
-GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
-start <- Sys.time()
-portfolioDetail.CTA <- optimize.portfolio.rebalancing(R = combinedData, GSoC.CTA, rebalance_on = 'months',
-                                                      optimize_method = "osqp", training_period = 12)
-start-Sys.time()
-
-
-
-nA <- ncol(combinedData)      # number of assets
-mu <- -1 * apply(combinedData, 2, mean)             # means
-P <- 2 * cov(combinedData)                         # covariance matrix
-
-# A is the constraint matrix
-A <- rbind(rep(1, nA), diag(1, nA))
-
-# These are upper and lower bound
-u <- c(1, rep(1, 12))
-l <- c(1, rep(0, 12))
-
-# Solve the min variance for later use
-q <- t(rep(0, nA))
-
-solQP <- solve_osqp(P, q, A, l, u, par = osqpSettings(eps_abs = 1))
-solQP$x
-
+for (i in mlist) {
+  test(i)
+}
 
