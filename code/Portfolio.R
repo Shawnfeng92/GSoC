@@ -1,6 +1,7 @@
 library(PortfolioAnalytics)
 library(quadprog)
 library(osqp)
+library(Rglpk)
 
 rm(list = ls())
 
@@ -30,32 +31,39 @@ GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 
-test <- function(method) {
-  final <- optimize.portfolio(R = data, GSoC.CTA, optimize_method = method, verbos = 0)
-  final$weights
+test <- function(x) {
+  result <- optimize.portfolio(R = data, GSoC.CTA, optimize_method = "Rglpk", verbos = 0, alpha = 0.05, rmin = x)
+  result <- data %*% result$weights
+  return(mean(result[which(result < quantile(result, 0.05))]))
 }
 
-test("osqp")
+CVaR <- c()
+return <- seq(from = -0.01, to = 0.01, length.out = 10)
 
-result <- c()
-
-for (i in methodsList) {
-  start <- Sys.time()
-  w <- test(i)
-  w[which(w<0)] <- 0
-  result <- rbind(result, c(mean(data %*% w), 
-                            sd(data %*% w), mean(data %*% w)/sd(data %*% w),
-                            as.numeric(Sys.time() - start, units = "secs"),w))
+for (i in return) {
+  CVaR <- c(CVaR, test(i))
 }
+plot( - CVaR, return, "l")
 
-colnames(result) <- c("mean", "sigma", "sharpe ratio", "running time",colnames(data))
-rownames(result) <- methodsList
-
-result <- round(result*100,2)
-result[,4] <- result[,4]/100 
-
-result <- c()
-for (i in 1:100) {
-  w <- test("osqp")
-  result <- c(result, mean(data %*% w)/sd(data %*% w))
-}
+# result <- c()
+# 
+# for (i in methodsList) {
+#   start <- Sys.time()
+#   w <- test(i)
+#   w[which(w<0)] <- 0
+#   result <- rbind(result, c(mean(data %*% w), 
+#                             sd(data %*% w), mean(data %*% w)/sd(data %*% w),
+#                             as.numeric(Sys.time() - start, units = "secs"),w))
+# }
+# 
+# colnames(result) <- c("mean", "sigma", "sharpe ratio", "running time",colnames(data))
+# rownames(result) <- methodsList
+# 
+# result <- round(result*100,2)
+# result[,4] <- result[,4]/100 
+# 
+# result <- c()
+# for (i in 1:100) {
+#   w <- test("osqp")
+#   result <- c(result, mean(data %*% w)/sd(data %*% w))
+# }
