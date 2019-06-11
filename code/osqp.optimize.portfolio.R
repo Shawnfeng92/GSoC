@@ -1102,10 +1102,6 @@ optimize.portfolio_v2 <- function(
       }
     }
     
-    # optimization type
-    osqp.return <- 0
-    osqp.risk <- 0
-    
     valid_risk = c("sd", "SD", "StdDev", "sigma", "volatility")
     valid_return = c("mean")
     
@@ -1115,6 +1111,11 @@ optimize.portfolio_v2 <- function(
       else if ((i$enabled)&(i$name %in% valid_risk)) osqp.risk <- 1
       else stop("osqp only solves mean, sd, or Sharpe Ratio type business objectives, choose a different optimize_method.")
     }
+    
+    # optimization type
+    osqp.return <- 0
+    osqp.risk <- 0
+    
     
     param <- osqpSettings(verbose = 0)
     
