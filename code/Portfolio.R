@@ -54,19 +54,8 @@ rownames(result) <- methodsList
 result <- round(result*100,2)
 result[,4] <- result[,4]/100 
 
-
-sum(result[5,(c(1,3,5)+4)])
-sum(result[5,(c(2,4)+4)])
-sum(result[5,(c(2,4,5)+4)])
-sum(result[5,(c(1,3)+4)])
-
-start <- Sys.time()
-test("random")
-Sys.time() - start
-
 result <- c()
-
 for (i in 1:100) {
-  w <- test("DEoptim")
+  w <- test("osqp")
   result <- c(result, mean(data %*% w)/sd(data %*% w))
 }
