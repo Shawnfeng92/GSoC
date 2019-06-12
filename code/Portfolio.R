@@ -13,37 +13,42 @@ data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), form
 
 GSoC.CTA <- portfolio.spec(assets = colnames(data))
 
-GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = 0, max_sum = 1)
+GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = -1, max_sum = 1)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
-group_list <- list(group1=c(1, 3, 5),
-                   group2=c(2, 4),
-                   groupA=c(2, 4, 5),
-                   groupB=c(1, 3))
-GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
-                        groups=group_list,
-                        group_min=c(0.15, 0.25, 0.2, 0.1),
-                        group_max=c(0.65, 0.55, 0.5, 0.4))
+# group_list <- list(group1=c(1, 3, 5),
+#                    group2=c(2, 4),
+#                    groupA=c(2, 4, 5),
+#                    groupB=c(1, 3))
+# GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
+#                         groups=group_list,
+#                         group_min=c(0.15, 0.25, 0.2, 0.1),
+#                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
 # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "return", return_target = 0.07)
 
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
-GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "CVaR")
 
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 
 test <- function(x) {
-  result <- optimize.portfolio(R = data, GSoC.CTA, optimize_method = "Rglpk", verbos = 0, alpha = 0.05, rmin = x)
+  result <- optimize.portfolio(R = data, GSoC.CTA, optimize_method = "Rglpk", verbos = 0, alpha = 0.05)
   result <- data %*% result$weights
   return(mean(result[which(result < quantile(result, 0.05))]))
 }
 
-CVaR <- c()
-return <- seq(from = -0.01, to = 0.01, length.out = 10)
+optimize.portfolio(R = data, GSoC.CTA, optimize_method = "Rglpk", verbos = 0, alpha = 0.05)
 
-for (i in return) {
-  CVaR <- c(CVaR, test(i))
-}
-plot( - CVaR, return, "l")
+
+# -----
+# 
+# CVaR <- c()
+# return <- seq(from = -0.01, to = 0.01, length.out = 10)
+# 
+# for (i in return) {
+#   CVaR <- c(CVaR, test(i))
+# }
+# plot( - CVaR, return, "l")
 
 # result <- c()
 # 
