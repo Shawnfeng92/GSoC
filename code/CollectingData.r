@@ -9,14 +9,15 @@ Quandl.api_key("dU-ukkHjcYwUsDqmcvjB")
 cl <- makeCluster(8)
 registerDoParallel(cl)
 
-tickerList <- foreach (i = chr(65:90), .combine = "c", .packages = "rvest") %dopar% {
-  url <- paste0("http://eoddata.com/stocklist/NYSE/", i, ".htm")
-  webpage <- read_html(url)
-  ticker_html <- html_nodes(webpage,'a')
-  ticker <- html_text(ticker_html)
-  ticker <- ticker[18:length(ticker)]
-  ticker <- ticker[which(ticker != "")][26:length(ticker)]
-  ticker <- ticker[1:(which(ticker == "Register")-1)]
+tickerList <- read.csv("~/Documents/GitHub/GSoC/data/tickers.csv")[,2]
+tickerList <- tickerList[2:length(tickerList)]
+tickerList <- as.character(tickerList)
+tickerList <- tickerList[which(!"-" %in% tickerList)]
+
+dataset <- foreach(i = tickerList, .combine = "cbind", .packages = "quantmod") %dopar% {
+  getSymbols(i, source="yahoo", auto.assign=FALSE, return.class="xts")[,6]
 }
+
 stopCluster(cl)
-rm(list = ls()[-which(ls()=="tickerList")])
+
+rm(list = ls()[which(ls()!="dataset")])
