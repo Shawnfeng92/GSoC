@@ -22,9 +22,12 @@ registerDoParallel(cl)
 #     }
 #   }
 # }
-
-foreach (i = tickerList) {
-  
+data <- c()
+for (i in c("MMM", "AAA", "AAPL")) {
+  a <- try(getSymbols(i, return.class = "xts", warnings = 0))
+  if (class(a) != "try-error") {
+    data <- rbind(data, a)
+  }
 }
 
 
