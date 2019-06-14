@@ -5,14 +5,15 @@ library(Quandl)
 library(gtools)
 
 Quandl.api_key("dU-ukkHjcYwUsDqmcvjB")
-
 letter <- chr(65:90)
-
 tickerList <- letter
 
-for (i in 1:3) {
+cl <- makeCluster(8)
+registerDoParallel(cl)
+
+for (i in 1:4) {
   temp <- c()
-  for (j in tickerList) {
+  foreach (j = tickerList) %dopar% {
     for (k in letter) {
       temp <- c(temp, paste0(j,k))
     }
@@ -20,8 +21,6 @@ for (i in 1:3) {
   tickerList <- temp
 }
 
-cl <- makeCluster(8)
-registerDoParallel(cl)
 
 data <- c()
 
