@@ -4,6 +4,7 @@ library(quantmod)
 library(Quandl)
 library(gtools)
 library(rvest)
+library(mice)
 
 # data collection ----
 collect <- function(){
@@ -40,5 +41,8 @@ collect <- function(){
   write.zoo(dataset, "Documents/GitHub/GSoC/data/all.csv", sep = ",")
 }
 # choose suitable data ----
+# collect()
 dataset <- read.csv(file = "~/Documents/GitHub/GSoC/data/all.csv")
 dataset <- xts(dataset[,2:ncol(dataset)], as.Date(dataset[,1], "%m/%d/%y"))
+dataset <- diff(dataset)
+dataset <- dataset[,which(apply(dataset, 2, FUN = function(x) sum(is.na(x))) < 300)]

@@ -5,10 +5,10 @@ library(Rglpk)
 
 rm(list = ls())
 
-source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+source("~/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
 # Data
-data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
+data <- read.csv("~/Documents/GitHub/GSoC/data/all.csv")
 data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
 
 GSoC.CTA <- portfolio.spec(assets = colnames(data))
@@ -27,7 +27,7 @@ GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
 # GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "return", return_target = 0.07)
 
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
-GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "CVaR")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 
@@ -37,7 +37,7 @@ test <- function(x) {
   return(mean(result[which(result < quantile(result, 0.05))]))
 }
 
-optimize.portfolio(R = data, GSoC.CTA, optimize_method = "Rglpk", verbos = 0, alpha = 0.05)
+optimize.portfolio(R = data, GSoC.CTA, optimize_method = "osqp")
 
 
 # -----
