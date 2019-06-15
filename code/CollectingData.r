@@ -27,7 +27,7 @@ time1 <- system.time(
   }
 )
 
-time <- system.time(
+time2 <- system.time(
   dataset <- foreach(i = stocklist, .combine = "cbind", .packages = "quantmod") %dopar% {
     temp <- try(getSymbols(i, source="yahoo", auto.assign=FALSE, return.class="xts")[,6])
     if (class(temp) != "try-error") {
