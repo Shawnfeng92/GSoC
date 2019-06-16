@@ -26,12 +26,14 @@ GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
-GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "CVaR")
 
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
+methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
 
 sharpetest <- function(x, sample) {
-  time <- system.time(result <- optimize.portfolio(R = sample, GSoC.CTA, optimize_method = x, verbos = 0))
+  time <- system.time(result <- optimize.portfolio(R = sample, 
+                                                   GSoC.CTA, optimize_method = x, 
+                                                   verbos = 0, alpha = 0.05))
   returns <- sample %*% result$weights
   result <- c(x, round(c(time[3], mean(returns)/sd(returns), result$weights),2))
   names(result) <- c("method", "time", "Sharpe", colnames(sample))
