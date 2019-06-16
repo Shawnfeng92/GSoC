@@ -35,7 +35,9 @@ sharpetest <- function(x, sample) {
                                                    GSoC.CTA, optimize_method = x, 
                                                    verbos = 0, alpha = 0.05))
   returns <- sample %*% result$weights
-  result <- c(x, round(c(time[3], mean(returns)/sd(returns), result$weights),2))
+  result <- c(x, round(c(time[3], 
+                         mean(returns)/mean(returns[which(returns < quantile(returns, 0.05))]), 
+                         result$weights),2))
   names(result) <- c("method", "time", "Sharpe", colnames(sample))
   return(result)
 }
@@ -47,7 +49,7 @@ pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("osqp", "PortfolioAnalytics")) %dopar%
+                  .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], testdata)
   }
