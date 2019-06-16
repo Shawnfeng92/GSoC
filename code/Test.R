@@ -33,9 +33,9 @@ methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 sharpetest <- function(x, sample) {
   time <- system.time(result <- optimize.portfolio(R = sample, GSoC.CTA, optimize_method = x, verbos = 0))
   returns <- sample %*% result$weights
-  result <- c(x, time[3], mean(returns)/sd(returns), result$weights)
+  result <- c(x, round(c(time[3], mean(returns)/sd(returns), result$weights),2))
   names(result) <- c("method", "time", "Sharpe", colnames(sample))
-  round(result, 2)
+  return(result)
 }
 
 cl <- makeCluster(8)
@@ -44,7 +44,7 @@ iterations <- 5
 pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts,
+result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], testdata)
