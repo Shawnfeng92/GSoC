@@ -7,13 +7,10 @@ library(foreach)
 library(doSNOW)
 
 rm(list = ls())
-
 source("~/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
-# Data
 data <- read.csv("~/Documents/GitHub/GSoC/data/fake.csv")
 data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))
-
 testdata <- data[,sample(1:1500, 20)]
 
 GSoC.CTA <- portfolio.spec(assets = colnames(testdata))
@@ -36,8 +33,8 @@ methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 sharpetest <- function(x, sample) {
   time <- system.time(result <- optimize.portfolio(R = sample, GSoC.CTA, optimize_method = x, verbos = 0))
   returns <- sample %*% result$weights
-  result <- c(time[3], mean(returns)/sd(returns), result$weights)
-  names(result) <- c("time", "Sharpe", colnames(sample))
+  result <- c(x, time[3], mean(returns)/sd(returns), result$weights)
+  names(result) <- c("method", "time", "Sharpe", colnames(sample))
   round(result, 2)
 }
 
