@@ -39,15 +39,28 @@ sharpetest <- function(x, sample) {
 }
 
 cl <- makeCluster(8)
-registerDoSNOW(cl)
+registerDoParallel(cl)
 iterations <- 5
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts,
+f <- function(){
+  pb <- txtProgressBar(min=1, max=4,style=3)
+  count <- 0
+  function(...) {
+    count <<- count + length(list(...)) - 1
+    setTxtProgressBar(pb,count)
+    flush.console()
+    c(...)
+  }
+}
+result <- foreach(i = icount(5), .combine = f(),
                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], testdata)
   }
 close(pb)
 stopCluster(cl) 
+
+
+
+
+
+
