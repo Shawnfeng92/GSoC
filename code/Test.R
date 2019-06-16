@@ -1,3 +1,5 @@
+pack <- c("PortfolioAnalytics", "quadprog", "osqp", "Rglpk",
+          "DEoptim", "foreach", "doSNOW", "doParallel")
 library(PortfolioAnalytics)
 library(quadprog)
 library(osqp)
@@ -33,12 +35,23 @@ methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
 sharpetest <- function(x, sample) {
   time <- system.time(result <- optimize.portfolio(R = sample, 
                                                    GSoC.CTA, optimize_method = x, 
+                                                   verbos = 0))
+  returns <- sample %*% result$weights
+  result <- c(x, round(c(time[3], mean(returns)/sd(returns),  
+                         result$weights),2))
+  names(result) <- c("method", "time", "Ratio", colnames(sample))
+  return(result)
+}
+
+CVaRtest <- function(x, sample) {
+  time <- system.time(result <- optimize.portfolio(R = sample, 
+                                                   GSoC.CTA, optimize_method = x, 
                                                    verbos = 0, alpha = 0.05))
   returns <- sample %*% result$weights
-  result <- c(x, round(c(time[3], 
+  result <- c(x, round(c(time[3], mean(returns), mean(returns[which(returns < quantile(returns, 0.05))]), 
                          mean(returns)/mean(returns[which(returns < quantile(returns, 0.05))]), 
                          result$weights),2))
-  names(result) <- c("method", "time", "Sharpe", colnames(sample))
+  names(result) <- c("method", "time", "mean", "ES", "Ratio", colnames(sample))
   return(result)
 }
 
