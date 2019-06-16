@@ -4,8 +4,7 @@ library(osqp)
 library(Rglpk)
 library(DEoptim)
 library(foreach)
-library(doParallel)
-
+library(doSNOW)
 
 rm(list = ls())
 
@@ -42,7 +41,6 @@ sharpetest <- function(x, sample) {
   round(result, 2)
 }
 
-library(doSNOW)
 cl <- makeCluster(8)
 registerDoSNOW(cl)
 iterations <- 5
