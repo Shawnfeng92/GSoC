@@ -2,14 +2,15 @@ library(PortfolioAnalytics)
 library(quadprog)
 library(osqp)
 library(Rglpk)
+library(foreach)
 
 rm(list = ls())
 
 source("~/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
 # Data
-data <- read.csv("~/Documents/GitHub/GSoC/data/all.csv")
-data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
+data <- read.csv("~/Documents/GitHub/GSoC/data/fake.csv")
+data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))
 
 GSoC.CTA <- portfolio.spec(assets = colnames(data))
 
@@ -38,6 +39,22 @@ test <- function(x) {
 }
 
 optimize.portfolio(R = data, GSoC.CTA, optimize_method = "osqp")
+cl <- makeCluster(8)
+registerDoParallel(cl)
+result <- foreach (i = 1:(ncol(data)/10), .combine = "rbind", .packages = c("PortfolioAnalytics", "osqp")) %dopar% {
+  GSoC.CTA <- portfolio.spec(assets = colnames(data[,1:(10*i)]))
+  GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = -1, max_sum = 1)
+  GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
+  GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
+  GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+  
+  time <-system.time(
+    optimize.portfolio(R = data[,1:(10*i)], GSoC.CTA, optimize_method = "osqp")
+  )
+  rm("GSoC.CTA")
+  temp <- c(10*i, time[3]) 
+}
+stopCluster(cl)
 
 
 # -----

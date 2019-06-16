@@ -46,3 +46,9 @@ dataset <- read.csv(file = "~/Documents/GitHub/GSoC/data/all.csv")
 dataset <- xts(dataset[,2:ncol(dataset)], as.Date(dataset[,1], "%m/%d/%y"))
 dataset <- diff(dataset)
 dataset <- dataset[,which(apply(dataset, 2, FUN = function(x) sum(is.na(x))) < 300)]
+
+for(i in 1:ncol(dataset)){
+  print(i)
+  dataset[which(is.na(dataset[,i])),i] <- rnorm(sum(is.na(dataset[,i])), mean(dataset[,i], na.rm = 1), sd(dataset[,i], na.rm = 1))
+}
+write.zoo(dataset, "Documents/GitHub/GSoC/data/fake.csv", sep = ",")
