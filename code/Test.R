@@ -49,8 +49,7 @@ iterations <- 5
 pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = rbind, 
-                  .options.snow = opts,
+result <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts,
                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], testdata)
