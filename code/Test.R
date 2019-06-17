@@ -9,9 +9,9 @@ library(foreach)
 library(doSNOW)
 
 rm(list = ls())
-source("~/Documents/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
-data <- read.csv("~/Documents/GitHub/GSoC/data/fake.csv")
+data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 data <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))
 testdata <- data[,sample(1:1500, 20)]
 
@@ -55,7 +55,7 @@ CVaRtest <- function(x, sample) {
   return(result)
 }
 
-cl <- makeCluster(8)
+cl <- makeCluster(16)
 registerDoSNOW(cl)
 iterations <- 5
 pb <- txtProgressBar(max = iterations, style = 3)
@@ -64,11 +64,24 @@ opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
                   .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
   {
-    sharpetest(methodsList[i], testdata)
+    CVaRtest(methodsList[i], testdata)
   }
 close(pb)
 stopCluster(cl) 
 
+cl <- makeCluster(16)
+registerDoSNOW(cl)
+iterations <- 1600
+pb <- txtProgressBar(max = iterations, style = 3)
+progress <- function(n) setTxtProgressBar(pb, n)
+opts <- list(progress = progress)
+result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+                  .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
+  {
+    CVaRtest(methodsList[5], testdata)
+  }
+close(pb)
+stopCluster(cl) 
 
 
 
