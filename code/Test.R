@@ -142,6 +142,6 @@ portf <- add.constraint(portf, type="box",
                         min=0.1, max=0.8,
                         indexnum=2)
 
-
+PortfolioAnalytics:::get_constraints(pspec)
 
 
