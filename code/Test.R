@@ -122,3 +122,5 @@ result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
   }
 close(pb)
 stopCluster(cl)
+
+sharpetest(methodsList[5], returns)
