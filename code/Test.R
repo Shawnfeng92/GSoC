@@ -83,7 +83,7 @@ sharpetest <- function(x, sample) {
 # stopCluster(cl) 
 # ----
 pspec <- portfolio.spec(assets=colnames(returns))
-pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0, max_sum=1.05)
+pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
 min <- c()
 max <- c()
