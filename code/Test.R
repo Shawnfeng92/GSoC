@@ -108,19 +108,19 @@ for (i in 1:20) {
 pspec <- add.objective(pspec, type = "return", name = "mean")
 pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
-cl <- makeCluster(16)
-registerDoSNOW(cl)
-iterations <- 5
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("mco", "PortfolioAnalytics", "data.table")) %dopar%
-  {
-    sharpetest(methodsList[i], returns)
-  }
-close(pb)
-stopCluster(cl)
-
-sharpetest(methodsList[5], returns)
+# methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
+# cl <- makeCluster(16)
+# registerDoSNOW(cl)
+# iterations <- 5
+# pb <- txtProgressBar(max = iterations, style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+#                   .packages = c("mco", "PortfolioAnalytics", "data.table")) %dopar%
+#   {
+#     sharpetest(methodsList[i], returns)
+#   }
+# close(pb)
+# stopCluster(cl)
+# 
+# sharpetest(methodsList[5], returns)
