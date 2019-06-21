@@ -16,7 +16,6 @@ library(Quandl)
 # file ---- 
 rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-
 # large data ----
 # data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 # returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
@@ -37,7 +36,7 @@ GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
-GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "CVaR")
+GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
 # Complex Portfolio ----
 pspec <- portfolio.spec(assets=colnames(returns))
