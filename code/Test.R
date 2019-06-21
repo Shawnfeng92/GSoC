@@ -116,7 +116,7 @@ rm("max", "min", "temp", "i")
 # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
 pspec <- add.objective(pspec, type = "return", name = "mean")
 pspec <- add.objective(pspec, type = "risk", name = "StdDev")
-
+# mco test ----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
 cl <- makeCluster(16)
 registerDoSNOW(cl)
