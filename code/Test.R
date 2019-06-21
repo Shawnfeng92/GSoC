@@ -1,3 +1,4 @@
+# package ----
 pack <- c("PortfolioAnalytics", "quadprog", "osqp", "Rglpk",
           "DEoptim", "foreach", "doSNOW", "doParallel")
 library(PortfolioAnalytics)
@@ -11,7 +12,8 @@ library(mco)
 library(data.table)
 library(GenSA)
 library(pso)
-
+library(Quandl)
+# file ---- 
 rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
