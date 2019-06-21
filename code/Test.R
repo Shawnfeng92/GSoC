@@ -17,6 +17,9 @@ source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
 # CTA portfolio
+data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
+returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
+
 GSoC.CTA <- portfolio.spec(assets = colnames(returns))
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = -1, max_sum = 1)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
