@@ -39,6 +39,32 @@ GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "CVaR")
 
+# Complex Portfolio ----
+pspec <- portfolio.spec(assets=colnames(returns))
+pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
+pspec <- add.constraint(portfolio = pspec, type = "long_only")
+# min <- c()
+# max <- c()
+# for (i in 1:20) {
+#   temp <- runif(2,0,1)
+#   min <- c(min, min(temp))
+#   max <- c(max, max(temp))
+# }
+# pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
+# rm("max", "min", "temp", "i")
+# pspec <- add.constraint(portfolio=pspec,
+#                         type="group",
+#                         groups=list(c(1, 2, 1), 4),
+#                         group_min=c(0.1, 0.15),
+#                         group_max=c(0.85, 0.55),
+#                         group_labels=c("GroupA", "GroupB"),
+#                         group_pos=c(2, 1))
+# pspec <- add.constraint(portfolio=pspec, type="position_limit", max_pos=3)
+# pspec <- add.constraint(portfolio=pspec, type="diversification", div_target=0.7)
+# pspec <- add.constraint(portfolio=pspec, type="turnover", turnover_target=0.2)
+# pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
+pspec <- add.objective(pspec, type = "return", name = "mean")
+pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 # test functions ----
 sharpetest <- function(x, sample) {
   time <- system.time(result <- optimize.portfolio(R = sample,
@@ -94,32 +120,6 @@ CVaRtest <- function(x, sample) {
 # close(pb)
 # stopCluster(cl)
 
-# Complex Portfolio ----
-pspec <- portfolio.spec(assets=colnames(returns))
-pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
-pspec <- add.constraint(portfolio = pspec, type = "long_only")
-# min <- c()
-# max <- c()
-# for (i in 1:20) {
-#   temp <- runif(2,0,1)
-#   min <- c(min, min(temp))
-#   max <- c(max, max(temp))
-# }
-# pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
-# rm("max", "min", "temp", "i")
-# pspec <- add.constraint(portfolio=pspec,
-#                         type="group",
-#                         groups=list(c(1, 2, 1), 4),
-#                         group_min=c(0.1, 0.15),
-#                         group_max=c(0.85, 0.55),
-#                         group_labels=c("GroupA", "GroupB"),
-#                         group_pos=c(2, 1))
-# pspec <- add.constraint(portfolio=pspec, type="position_limit", max_pos=3)
-# pspec <- add.constraint(portfolio=pspec, type="diversification", div_target=0.7)
-# pspec <- add.constraint(portfolio=pspec, type="turnover", turnover_target=0.2)
-# pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
-pspec <- add.objective(pspec, type = "return", name = "mean")
-pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 # mco test ----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
 cl <- makeCluster(16)
