@@ -9,6 +9,8 @@ library(foreach)
 library(doSNOW)
 library(mco)
 library(data.table)
+library(GenSA)
+library(pso)
 
 rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
