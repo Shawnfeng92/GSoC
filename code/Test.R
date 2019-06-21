@@ -69,7 +69,7 @@ opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
                   .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
   {
-    CVaRtest(methodsList[i], testdata)
+    CVaRtest(methodsList[i], returns)
   }
 close(pb)
 stopCluster(cl)
@@ -85,7 +85,7 @@ opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
   {
-    sharpetest(methodsList[i], testdata)
+    sharpetest(methodsList[i], returns)
   }
 close(pb)
 stopCluster(cl)
