@@ -12,9 +12,11 @@ library(data.table)
 
 rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-# ----
+
+# large portfolio----
 data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
+# CTA portfolio
 GSoC.CTA <- portfolio.spec(assets = colnames(returns))
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = -1, max_sum = 1)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
@@ -52,6 +54,7 @@ CVaRtest <- function(x, sample) {
   names(result) <- c("method", "time", "mean", "ES", "Ratio", colnames(sample))
   return(result)
 }
+
 # Rglpk test----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
 cl <- makeCluster(16)
@@ -67,6 +70,7 @@ result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
   }
 close(pb)
 stopCluster(cl)
+
 # osqp test----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
 cl <- makeCluster(16)
@@ -82,6 +86,7 @@ result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
   }
 close(pb)
 stopCluster(cl)
+
 # ----
 pspec <- portfolio.spec(assets=colnames(returns))
 pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
