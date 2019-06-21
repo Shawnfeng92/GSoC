@@ -67,7 +67,7 @@ pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 # test functions ----
 sharpetest <- function(x, sample) {
   time <- system.time(result <- optimize.portfolio(R = sample,
-                                                   pspec, optimize_method = x,
+                                                   GSoC.CTA, optimize_method = x,
                                                    verbos = 0))
   returns <- sample %*% result$weights
   result <- c(x, round(c(time[3], mean(returns)/sd(returns),
@@ -102,23 +102,21 @@ CVaRtest <- function(x, sample) {
 #   }
 # close(pb)
 # stopCluster(cl)
-
 # osqp test ----
-# methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
-# cl <- makeCluster(16)
-# registerDoSNOW(cl)
-# iterations <- 5
-# pb <- txtProgressBar(max = iterations, style = 3)
-# progress <- function(n) setTxtProgressBar(pb, n)
-# opts <- list(progress = progress)
-# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-#                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
-#   {
-#     sharpetest(methodsList[i], returns)
-#   }
-# close(pb)
-# stopCluster(cl)
-
+methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
+cl <- makeCluster(16)
+registerDoSNOW(cl)
+iterations <- 5
+pb <- txtProgressBar(max = iterations, style = 3)
+progress <- function(n) setTxtProgressBar(pb, n)
+opts <- list(progress = progress)
+result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+                  .packages = c("osqp", "PortfolioAnalytics")) %dopar%
+  {
+    sharpetest(methodsList[i], returns)
+  }
+close(pb)
+stopCluster(cl)
 # mco test ----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
 cl <- makeCluster(16)
