@@ -93,8 +93,8 @@ for (i in 1:20) {
   min <- c(min, min(temp))
   max <- c(max, max(temp))
 }
-# pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
-# rm("max", "min", "temp", "i")
+pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
+rm("max", "min", "temp", "i")
 # pspec <- add.constraint(portfolio=pspec,
 #                         type="group",
 #                         groups=list(c(1, 2, 1), 4),
