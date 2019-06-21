@@ -14,11 +14,11 @@ rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
 # large data ----
-data <- read.csv("~/GitHub/GSoC/data/fake.csv")
-returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
+# data <- read.csv("~/GitHub/GSoC/data/fake.csv")
+# returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
 # CTA data ----
 data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
-returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
+returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
 # simple portfolio ----
 GSoC.CTA <- portfolio.spec(assets = colnames(returns))
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = -1, max_sum = 1)
@@ -59,50 +59,50 @@ CVaRtest <- function(x, sample) {
 }
 
 # Rglpk test ----
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
-cl <- makeCluster(16)
-registerDoSNOW(cl)
-iterations <- 5
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
-  {
-    CVaRtest(methodsList[i], returns)
-  }
-close(pb)
-stopCluster(cl)
+# methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
+# cl <- makeCluster(16)
+# registerDoSNOW(cl)
+# iterations <- 5
+# pb <- txtProgressBar(max = iterations, style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+#                   .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
+#   {
+#     CVaRtest(methodsList[i], returns)
+#   }
+# close(pb)
+# stopCluster(cl)
 
 # osqp test ----
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
-cl <- makeCluster(16)
-registerDoSNOW(cl)
-iterations <- 5
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("osqp", "PortfolioAnalytics")) %dopar%
-  {
-    sharpetest(methodsList[i], returns)
-  }
-close(pb)
-stopCluster(cl)
+# methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
+# cl <- makeCluster(16)
+# registerDoSNOW(cl)
+# iterations <- 5
+# pb <- txtProgressBar(max = iterations, style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+#                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
+#   {
+#     sharpetest(methodsList[i], returns)
+#   }
+# close(pb)
+# stopCluster(cl)
 
 # Complex Portfolio ----
 pspec <- portfolio.spec(assets=colnames(returns))
 pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
-min <- c()
-max <- c()
-for (i in 1:20) {
-  temp <- runif(2,0,1)
-  min <- c(min, min(temp))
-  max <- c(max, max(temp))
-}
-pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
-rm("max", "min", "temp", "i")
+# min <- c()
+# max <- c()
+# for (i in 1:20) {
+#   temp <- runif(2,0,1)
+#   min <- c(min, min(temp))
+#   max <- c(max, max(temp))
+# }
+# pspec <- add.constraint(portfolio=pspec, type="box", min=min, max=max)
+# rm("max", "min", "temp", "i")
 # pspec <- add.constraint(portfolio=pspec,
 #                         type="group",
 #                         groups=list(c(1, 2, 1), 4),
