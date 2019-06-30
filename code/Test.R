@@ -133,3 +133,24 @@ result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
   }
 close(pb)
 stopCluster(cl)
+
+# mco test ----
+# 
+# f <- function(w) {
+#   - mean(returns %*% w) / sd(returns %*% w)
+# }
+# 
+# idim <- 12
+# odim <- 1
+# 
+# g <- function(w) {
+#   1 - sum(w)
+# }
+# 
+# result <- nsga2(fn = f, idim = idim, odim = odim, cdim = 1,
+#                 constraints = g, 
+#                 lower.bounds = rep(0, 12), 
+#                 upper.bounds = rep(1, 12), 
+#                 popsize = 200, generations = 200)
+# 
+# round(result$par[1,], 2)
