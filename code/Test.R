@@ -16,6 +16,28 @@ library(Quandl)
 # file ---- 
 rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
+# test functions ----
+sharpetest <- function(x, sample) {
+  time <- system.time(result <- optimize.portfolio(R = sample,
+                                                   GSoC.CTA, optimize_method = x,
+                                                   verbos = 0))
+  returns <- sample %*% result$weights
+  result <- c(x, round(c(time[3], mean(returns)/sd(returns),
+                         result$weights),2))
+  names(result) <- c("method", "time", "Ratio", colnames(sample))
+  return(result)
+}
+CVaRtest <- function(x, sample) {
+  time <- system.time(result <- optimize.portfolio(R = sample,
+                                                   GSoC.CTA, optimize_method = x,
+                                                   verbos = 0, alpha = 0.05))
+  returns <- sample %*% result$weights
+  result <- c(x, round(c(time[3], mean(returns), mean(returns[which(returns < quantile(returns, 0.05))]),
+                         mean(returns)/mean(returns[which(returns < quantile(returns, 0.05))]),
+                         result$weights),2))
+  names(result) <- c("method", "time", "mean", "ES", "Ratio", colnames(sample))
+  return(result)
+}
 # large data ----
 # data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 # returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%Y-%m-%d"))[,sample(1:1500, 20)]
@@ -27,17 +49,19 @@ GSoC.CTA <- portfolio.spec(assets = colnames(returns))
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", 
                            min_sum = 1, max_sum = 1)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
-# group_list <- list(group1=c(1, 3, 5),
-#                    group2=c(2, 4),
-#                    groupA=c(2, 4, 5),
-#                    groupB=c(1, 3))
-# GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
-#                         groups=group_list,
-#                         group_min=c(0.15, 0.25, 0.2, 0.1),
-#                         group_max=c(0.65, 0.55, 0.5, 0.4))
+group_list <- list(group1=c(1, 3, 5),
+                   group2=c(2, 4),
+                   groupA=c(2, 4, 5),
+                   groupB=c(1, 3))
+GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
+                        groups=group_list,
+                        group_min=c(0.15, 0.25, 0.2, 0.1),
+                        group_max=c(0.65, 0.55, 0.5, 0.4))
 GSoC.CTA <- add.constraint(GSoC.CTA, type ="position_limit", max_pos=7)
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
+
+result <- optimize.portfolio(returns, GSoC.CTA, optimize_method = "mco")
 
 # Complex Portfolio ----
 # pspec <- portfolio.spec(assets=colnames(returns))
@@ -65,28 +89,6 @@ GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 # # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
 # pspec <- add.objective(pspec, type = "return", name = "mean")
 # pspec <- add.objective(pspec, type = "risk", name = "StdDev")
-# test functions ----
-sharpetest <- function(x, sample) {
-  time <- system.time(result <- optimize.portfolio(R = sample,
-                                                   GSoC.CTA, optimize_method = x,
-                                                   verbos = 0))
-  returns <- sample %*% result$weights
-  result <- c(x, round(c(time[3], mean(returns)/sd(returns),
-                         result$weights),2))
-  names(result) <- c("method", "time", "Ratio", colnames(sample))
-  return(result)
-}
-CVaRtest <- function(x, sample) {
-  time <- system.time(result <- optimize.portfolio(R = sample,
-                                                   GSoC.CTA, optimize_method = x,
-                                                   verbos = 0, alpha = 0.05))
-  returns <- sample %*% result$weights
-  result <- c(x, round(c(time[3], mean(returns), mean(returns[which(returns < quantile(returns, 0.05))]),
-                         mean(returns)/mean(returns[which(returns < quantile(returns, 0.05))]),
-                         result$weights),2))
-  names(result) <- c("method", "time", "mean", "ES", "Ratio", colnames(sample))
-  return(result)
-}
 
 # Rglpk test ----
 # methodsList <- c("DEoptim", "random", "pso", "GenSA", "Rglpk")
