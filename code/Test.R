@@ -103,21 +103,21 @@ CVaRtest <- function(x, sample) {
 # close(pb)
 # stopCluster(cl)
 # osqp test ----
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
-cl <- makeCluster(16)
-registerDoSNOW(cl)
-iterations <- 5
-pb <- txtProgressBar(min = 0, max = iterations, style = 3)
-print("")
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("osqp", "PortfolioAnalytics")) %dopar%
-  {
-    sharpetest(methodsList[i], returns)
-  }
-close(pb)
-stopCluster(cl)
+# methodsList <- c("DEoptim", "random", "pso", "GenSA", "osqp")
+# cl <- makeCluster(16)
+# registerDoSNOW(cl)
+# iterations <- 5
+# pb <- txtProgressBar(min = 0, max = iterations, style = 3)
+# print("")
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+#                   .packages = c("osqp", "PortfolioAnalytics")) %dopar%
+#   {
+#     sharpetest(methodsList[i], returns)
+#   }
+# close(pb)
+# stopCluster(cl)
 # mco test ----
 methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
 cl <- makeCluster(16)
