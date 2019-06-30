@@ -35,7 +35,7 @@ GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
 #                         groups=group_list,
 #                         group_min=c(0.15, 0.25, 0.2, 0.1),
 #                         group_max=c(0.65, 0.55, 0.5, 0.4))
-# GSoC.CTA <- add.constraint(GSoC.CTA, type ="position_limit", max_pos=3)
+GSoC.CTA <- add.constraint(GSoC.CTA, type ="position_limit", max_pos=7)
 GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
