@@ -25,7 +25,7 @@ returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), f
 # simple portfolio ----
 GSoC.CTA <- portfolio.spec(assets = colnames(returns))
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", 
-                           min_sum = 0.95, max_sum = 1.05)
+                           min_sum = 1, max_sum = 1)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
 # group_list <- list(group1=c(1, 3, 5),
 #                    group2=c(2, 4),
