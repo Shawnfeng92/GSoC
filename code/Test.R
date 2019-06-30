@@ -24,18 +24,19 @@ data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
 returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
 # simple portfolio ----
 GSoC.CTA <- portfolio.spec(assets = colnames(returns))
-GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", min_sum = 0, max_sum = 1)
+GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "weight_sum", 
+                           min_sum = 0.95, max_sum = 1.05)
 GSoC.CTA <- add.constraint(portfolio = GSoC.CTA, type = "long_only")
-group_list <- list(group1=c(1, 3, 5),
-                   group2=c(2, 4),
-                   groupA=c(2, 4, 5),
-                   groupB=c(1, 3))
-GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
-                        groups=group_list,
-                        group_min=c(0.15, 0.25, 0.2, 0.1),
-                        group_max=c(0.65, 0.55, 0.5, 0.4))
-GSoC.CTA <- add.constraint(GSoC.CTA, type ="position_limit", max_pos=3)
-GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
+# group_list <- list(group1=c(1, 3, 5),
+#                    group2=c(2, 4),
+#                    groupA=c(2, 4, 5),
+#                    groupB=c(1, 3))
+# GSoC.CTA <- add.constraint(portfolio=GSoC.CTA, type="group",
+#                         groups=group_list,
+#                         group_min=c(0.15, 0.25, 0.2, 0.1),
+#                         group_max=c(0.65, 0.55, 0.5, 0.4))
+# GSoC.CTA <- add.constraint(GSoC.CTA, type ="position_limit", max_pos=3)
+GSoC.CTA <- add.objective(GSoC.CTA, type =ss "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
 # Complex Portfolio ----
@@ -119,20 +120,20 @@ CVaRtest <- function(x, sample) {
 # close(pb)
 # stopCluster(cl)
 # mco test ----
-methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
-cl <- makeCluster(16)
-registerDoSNOW(cl)
-iterations <- 5
-pb <- txtProgressBar(max = iterations, style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("mco", "PortfolioAnalytics", "data.table")) %dopar%
-  {
-    sharpetest(methodsList[i], returns)
-  }
-close(pb)
-stopCluster(cl)
+# methodsList <- c("DEoptim", "random", "pso", "GenSA", "mco")
+# cl <- makeCluster(16)
+# registerDoSNOW(cl)
+# iterations <- 5
+# pb <- txtProgressBar(max = iterations, style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
+#                   .packages = c("mco", "PortfolioAnalytics", "data.table")) %dopar%
+#   {
+#     sharpetest(methodsList[i], returns)
+#   }
+# close(pb)
+# stopCluster(cl)
 
 # mco test ----
 # 
@@ -154,3 +155,6 @@ stopCluster(cl)
 #                 popsize = 200, generations = 200)
 # 
 # round(result$par[1,], 2)
+
+result <- sharpetest("mco", returns)
+sum(as.numeric(result[4:15]))
