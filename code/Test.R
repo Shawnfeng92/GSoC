@@ -62,6 +62,7 @@ GSoC.CTA <- add.objective(GSoC.CTA, type = "return", name = "mean")
 GSoC.CTA <- add.objective(GSoC.CTA, type = "risk", name = "StdDev")
 
 result <- optimize.portfolio(returns, GSoC.CTA, optimize_method = "mco")
+w <- result$weights
 
 # Complex Portfolio ----
 # pspec <- portfolio.spec(assets=colnames(returns))
