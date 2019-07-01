@@ -176,7 +176,7 @@ pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c(methodsList[-2], "PortfolioAnalytics")) %dopar%
+                  .packages = c("mco", "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], returns)
   }
