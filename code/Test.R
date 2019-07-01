@@ -18,13 +18,17 @@ rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 # test functions ----
 sharpetest <- function(x, sample) {
-  time <- system.time(result <- optimize.portfolio(R = sample,
+  time <- system.time(result1 <- optimize.portfolio(R = sample,
                                                    pspec, optimize_method = x,
                                                    verbos = 0))
-  returns <- sample %*% result$weights
+  returns <- sample %*% result1$weights
   result <- c(x, round(c(time[3], mean(returns)/sd(returns),
-                         result$weights),2))
-  names(result) <- c("method", "time", "Ratio", colnames(sample))
+                         result1$weights),2))
+  for (i in group_list) {
+    result <- c(result, sum(result1$weights[i]))
+  }
+  names(result) <- c("method", "time", "Ratio", colnames(sample), "group1",
+                     "group2", "group3", "group4")
   return(result)
 }
 CVaRtest <- function(x, sample) {
@@ -66,7 +70,7 @@ returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), f
 
 # Complex Portfolio ----
 pspec <- portfolio.spec(assets=colnames(returns))
-pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.5, max_sum=1.05)
+pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=1, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
 # min <- c()
 # max <- c()
@@ -170,7 +174,7 @@ pb <- txtProgressBar(max = iterations, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts <- list(progress = progress)
 result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
-                  .packages = c("Rglpk", "PortfolioAnalytics")) %dopar%
+                  .packages = c(methodsList[-2], "PortfolioAnalytics")) %dopar%
   {
     sharpetest(methodsList[i], returns)
   }
