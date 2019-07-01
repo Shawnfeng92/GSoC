@@ -70,7 +70,7 @@ returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), f
 
 # Complex Portfolio ----
 pspec <- portfolio.spec(assets=colnames(returns))
-pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=1, max_sum=1.05)
+pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=0.95, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
 # min <- c()
 # max <- c()
