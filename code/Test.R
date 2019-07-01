@@ -27,8 +27,10 @@ sharpetest <- function(x, sample) {
   for (i in group_list) {
     result <- c(result, sum(result1$weights[i]))
   }
+  result <- c(result, sum(result1$weights^2))
+  result <- c(result, sum(result1$weights))
   names(result) <- c("method", "time", "Ratio", colnames(sample), "group1",
-                     "group2", "group3", "group4")
+                     "group2", "group3", "group4", "SSum", "Sum")
   return(result)
 }
 CVaRtest <- function(x, sample) {
