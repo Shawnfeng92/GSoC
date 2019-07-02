@@ -51,37 +51,20 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
   
   # test ----
-  # cl <- makeCluster(16)
-  # registerDoSNOW(cl)
-  # iterations <- length(method_list)
-  # pb <- txtProgressBar(max = iterations, style = 3)
-  # progress <- function(n) setTxtProgressBar(pb, n)
-  # opts <- list(progress = progress)
-  # result <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts, .packages = pack) %dopar%
-  #   {
-  #     rtime <- system.time(
-  #       weight <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights
-  #     )
-  #     result <- c(weight, rtime[1])
-  #     names(result) <- c(colnames(returns), "Running Time")
-  #     result
-  #   }
-  # rownames(result) <- method_list
-  # close(pb)
-  # stopCluster(cl)
+  cl <- makeCluster(16)
+  registerDoSNOW(cl)
+  iterations <- length(method_list)
+  pb <- txtProgressBar(max = iterations, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts <- list(progress = progress)
+  weights <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts, .packages = pack) %dopar%
+    {
+      optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights
+    }
+  close(pb)
+  stopCluster(cl)
   
-  result <- c()
-  for (i in 1:length(method_list)) {
-    rtime <- system.time(
-      weight <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights
-    )
-    result <- rbind(result, c(weight * 100, rtime[1]))
-  }
-  
-  colnames(result) <- c(colnames(returns), "Time")
-  rownames(result) <- method_list
-  
-  weights <- result[, 1:ncol(returns)]
+  return(weights)
   
   portfolios <- apply(weights, 1, function(w){returns %*% w})
   
@@ -99,9 +82,8 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
     down <- apply(portfolios, 2, function(R){mean(R[which(R < quantile(R, 0.05))])})
   }
   
-  list(weight = weights,
-       statistic = rbind(Ratio = up/down * 100, 
-                         Time = result[, ncol(returns) + 1], 
-                         Sum = apply(weights, 1, sum)))
+  list(weight = weights*100,
+       statistic = rbind(up/down * 100, 
+                         sum = apply(weights, 1, sum)))
 }
-result <- test()
+test()
