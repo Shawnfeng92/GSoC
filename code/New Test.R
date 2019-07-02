@@ -15,7 +15,7 @@ rm(list = ls())
 
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
-test <- function(method_list = c("DEoptim", "random", "pso", "GenSA", "mco"), risk = "StdDev", reward = "mean", returns = "CTA", num = 20) {
+test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), risk = "StdDev", reward = "mean", returns = "CTA", num = 20) {
   # package ----
   pack <- c(method_list, "PortfolioAnalytics")
   pack <- pack[which(pack != "random")]
@@ -31,6 +31,7 @@ test <- function(method_list = c("DEoptim", "random", "pso", "GenSA", "mco"), ri
   
   # portfolio ----
   pspec <- portfolio.spec(assets=colnames(returns))
+  
   pspec <- add.objective(pspec, type = "return", name = reward)
   pspec <- add.objective(pspec, type = "risk", name = risk)
 
@@ -50,7 +51,7 @@ test <- function(method_list = c("DEoptim", "random", "pso", "GenSA", "mco"), ri
   # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
   
   # test ----
-  cl <- makeCluster(16)
+  cl <- makeCluster(4)
   registerDoSNOW(cl)
   iterations <- length(method_list)
   pb <- txtProgressBar(max = iterations, style = 3)
@@ -61,7 +62,6 @@ test <- function(method_list = c("DEoptim", "random", "pso", "GenSA", "mco"), ri
       rtime <- system.time(
         weight <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights
       )
-      print(weight)
       result <- c(weight, rtime[1])
       names(result) <- c(colnames(returns), "Running Time")
       result
@@ -69,6 +69,7 @@ test <- function(method_list = c("DEoptim", "random", "pso", "GenSA", "mco"), ri
   rownames(result) <- method_list
   close(pb)
   stopCluster(cl)
+  
   
   weights <- result[, 1:ncol(returns)]
   
