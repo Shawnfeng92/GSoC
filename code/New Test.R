@@ -16,10 +16,6 @@ rm(list = ls())
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 
 test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), risk = "StdDev", reward = "mean", returns = "CTA", num = 20) {
-  # package ----
-  pack <- c(method_list, "PortfolioAnalytics")
-  pack <- pack[which(pack != "random")]
-  
   # data ----
   if (returns == "CTA") {
     data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
@@ -51,20 +47,25 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
   
   # test ----
-  cl <- makeCluster(16)
+  cl <- makeCluster(4)
   registerDoSNOW(cl)
-  iterations <- length(method_list)
-  pb <- txtProgressBar(max = iterations, style = 3)
+  iterations <- 4
+  pb <- txtProgressBar(max = 4, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
-  weights <- foreach(i = 1:iterations, .combine = rbind, .options.snow = opts, .packages = pack) %dopar%
+  
+  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("PortfolioAnalytics")) %dopar%
     {
-      optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights
+      rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights)
+      c(w, rtime)
     }
   close(pb)
   stopCluster(cl)
+  rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[1])$weights)
+  result <- rbind(result, c(w, rtime))
+  rownames(result) <- method_list
   
-  return(weights)
+  weights <- result[,1:ncol(returns)]
   
   portfolios <- apply(weights, 1, function(w){returns %*% w})
   
@@ -83,7 +84,8 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   }
   
   list(weight = weights*100,
-       statistic = rbind(up/down * 100, 
+       statistic = rbind(Ratio = up/down * 100, 
+                         Time = result[,ncol(returns) + 1],
                          sum = apply(weights, 1, sum)))
 }
 test()
