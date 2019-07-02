@@ -22,7 +22,7 @@ sharpetest <- function(x, sample) {
                                                    pspec, optimize_method = x,
                                                    verbos = 0))
   returns <- sample %*% result1$weights
-  result <- c(x, round(c(time[3], mean(returns)/sd(returns),
+  result <- c(x, round(c(time[3], median(returns)/sd(returns),
                          result1$weights),2))
   for (i in group_list) {
     result <- c(result, sum(result1$weights[i]))
@@ -94,7 +94,7 @@ pspec <- add.constraint(portfolio=pspec, type="position_limit", max_pos=3)
 pspec <- add.constraint(portfolio=pspec, type="diversification", div_target=0.7)
 # pspec <- add.constraint(portfolio=pspec, type="turnover", turnover_target=0.2)
 # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
-pspec <- add.objective(pspec, type = "return", name = "mean")
+pspec <- add.objective(pspec, type = "return", name = "median")
 pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 # result <- optimize.portfolio(returns, pspec, optimize_method = "mco")
 # w <- result$weights
@@ -182,3 +182,22 @@ result <- foreach(i = 1:iterations, .combine = cbind, .options.snow = opts,
   }
 close(pb)
 stopCluster(cl)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
