@@ -88,4 +88,4 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
                          Time = result[,ncol(returns) + 1],
                          sum = apply(weights, 1, sum)))
 }
-test()
+result <- test()
