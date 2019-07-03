@@ -1,21 +1,22 @@
-library(PortfolioAnalytics)
-library(quadprog)
-library(osqp)
-library(Rglpk)
-library(DEoptim)
-library(foreach)
-library(doSNOW)
-library(mco)
-library(data.table)
-library(GenSA)
-library(pso)
-library(Quandl)
+{ 
+  library(PortfolioAnalytics)
+  library(quadprog)
+  library(osqp)
+  library(Rglpk)
+  library(DEoptim)
+  library(foreach)
+  library(doSNOW)
+  library(mco)
+  library(data.table)
+  library(GenSA)
+  library(pso)
+  library(Quandl)
+}
 
 rm(list = ls())
 
-source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-
 test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), risk = "StdDev", reward = "mean", returns = "CTA", num = 20) {
+  source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
   # data ----
   if (returns == "CTA") {
     data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
@@ -54,7 +55,7 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
   
-  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("mco", "DEoptim", "pso", "GenSA")) %dopar%
+  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("PortfolioAnalytics")) %dopar%
     {
       rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights)
       c(w, rtime)
@@ -89,3 +90,38 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
                          sum = apply(weights, 1, sum)))
 }
 result <- test()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
