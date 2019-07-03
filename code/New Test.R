@@ -54,7 +54,7 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
   
-  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("PortfolioAnalytics")) %dopar%
+  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("mco", "DEoptim", "pso", "GenSA")) %dopar%
     {
       rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights)
       c(w, rtime)
