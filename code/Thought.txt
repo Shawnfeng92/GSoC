@@ -1,0 +1,10 @@
+osqp
+ - Need to unify format
+ - Need to add support for linear solver
+Rglpk
+ - Need to unify format
+ - Need to reconsider algoithm
+mco
+ - Done
+ - Comments needed
+ -
