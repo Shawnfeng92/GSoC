@@ -7,4 +7,8 @@ Rglpk
 mco
  - Done
  - Comments needed
- -
+
+For Target Return
+ - Find max return first
+ - Adjust min return according to target
+ - Warn users for unvalid target
