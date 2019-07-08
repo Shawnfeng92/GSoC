@@ -1,21 +1,22 @@
-library(PortfolioAnalytics)
-library(quadprog)
-library(osqp)
-library(Rglpk)
-library(DEoptim)
-library(foreach)
-library(doSNOW)
-library(mco)
-library(data.table)
-library(GenSA)
-library(pso)
-library(Quandl)
+{ 
+  library(PortfolioAnalytics)
+  library(quadprog)
+  library(osqp)
+  library(Rglpk)
+  library(DEoptim)
+  library(foreach)
+  library(doSNOW)
+  library(mco)
+  library(data.table)
+  library(GenSA)
+  library(pso)
+  library(Quandl)
+}
 
 rm(list = ls())
 
-source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-
 test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), risk = "StdDev", reward = "mean", returns = "CTA", num = 20) {
+  source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
   # data ----
   if (returns == "CTA") {
     data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
@@ -89,3 +90,37 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
                          sum = apply(weights, 1, sum)))
 }
 result <- test()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

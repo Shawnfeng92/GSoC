@@ -1,0 +1,14 @@
+osqp
+ - Need to unify format
+ - Need to add support for linear solver
+Rglpk
+ - Need to unify format
+ - Need to reconsider algoithm
+mco
+ - Done
+ - Comments needed
+
+For Target Return
+ - Find max return first
+ - Adjust min return according to target
+ - Warn users for unvalid target
