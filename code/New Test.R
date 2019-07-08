@@ -47,22 +47,22 @@ test <- function(method_list = c("mco", "DEoptim", "random", "pso", "GenSA"), ri
   # pspec <- add.constraint(portfolio=pspec, type="return", return_target=0.007)
   
   # test ----
-  cl <- makeCluster(4)
+  cl <- makeCluster(16)
   registerDoSNOW(cl)
-  iterations <- 4
-  pb <- txtProgressBar(max = 4, style = 3)
+  iterations <- 5
+  pb <- txtProgressBar(max = 5, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
   
-  result <- foreach(i = 2:5, .combine = rbind, .options.snow = opts, .packages = c("PortfolioAnalytics")) %dopar%
+  result <- foreach(it = 1:5, .combine = rbind, .options.snow = opts, .packages = c("PortfolioAnalytics")) %dopar%
     {
-      rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[i])$weights)
+      rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[it])$weights)
       c(w, rtime)
     }
   close(pb)
   stopCluster(cl)
-  rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[1])$weights)
-  result <- rbind(result, c(w, rtime))
+  # rtime <- system.time(w <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = method_list[1])$weights)
+  # result <- rbind(result, c(w, rtime))
   rownames(result) <- method_list
   
   weights <- result[,1:ncol(returns)]
