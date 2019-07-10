@@ -23,7 +23,7 @@ returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), f
 pspec <- portfolio.spec(assets=colnames(returns))
   
 pspec <- add.objective(pspec, type = "return", name = "mean")
-pspec <- add.objective(pspec, type = "risk", name = "osqp")
+pspec <- add.objective(pspec, type = "risk", name = "ES")
 
 pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=1, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
@@ -36,19 +36,6 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
-result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
-port <- returns %*% result$weights
-sigma <- sd(port)
-return <- mean(port)
-ES <- mean(port[which(port < quantile(port, 0.05))])
-print(return/ES)
-
-#result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "osqp")
-result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "Rglpk")
-port <- returns %*% result$weights
-sigma <- sd(port)
-return <- mean(port)
-ES <- mean(port[which(port < quantile(port, 0.05))])
-print(return/ES)
-
-
+# result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
+result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "osqp")
+# result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "Rglpk")
