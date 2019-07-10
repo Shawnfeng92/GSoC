@@ -4,10 +4,12 @@ osqp
 Rglpk
  - Need to unify format
  - Need to reconsider algoithm
+ - Done 
+ - Comments needed
 mco
  - Done
  - Comments needed
-
+ 
 For Target Return
  - Find max return first
  - Adjust min return according to target
