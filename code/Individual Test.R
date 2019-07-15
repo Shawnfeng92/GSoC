@@ -17,7 +17,7 @@ rm(list = ls())
 
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
 data <- read.csv("~/GitHub/GSoC/data/fake.csv")
-returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
+returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1])))
 
     
 pspec <- portfolio.spec(assets=colnames(returns))
@@ -48,7 +48,7 @@ w <- result$weights
 p <- returns %*% w
 print(mean(p)/sd(p))
 
-result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "GenSA")
+result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "random")
 w <- result$weights
 p <- returns %*% w
 print(mean(p)/sd(p))
