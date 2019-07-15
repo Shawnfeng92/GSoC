@@ -16,14 +16,14 @@
 rm(list = ls())
 
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
+data <- read.csv("~/GitHub/GSoC/data/fake.csv")
 returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1]), format = "%m/%d/%Y"))
 
     
 pspec <- portfolio.spec(assets=colnames(returns))
   
 pspec <- add.objective(pspec, type = "return", name = "mean")
-pspec <- add.objective(pspec, type = "risk", name = "ES")
+pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 
 pspec <- add.constraint(portfolio=pspec, type="weight_sum", min_sum=1, max_sum=1.05)
 pspec <- add.constraint(portfolio = pspec, type = "long_only")
@@ -44,6 +44,11 @@ print(mean(p)/sd(p))
 print(mean(p)/mean(p[which(p < quantile(p,0.05))]))
 
 result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "osqp")
+w <- result$weights
+p <- returns %*% w
+print(mean(p)/sd(p))
+
+result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "GenSA")
 w <- result$weights
 p <- returns %*% w
 print(mean(p)/sd(p))
