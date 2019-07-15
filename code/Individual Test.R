@@ -36,6 +36,19 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
-# result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
+result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
+
+w <- result$weights
+p <- returns %*% w
+print(mean(p)/sd(p))
+print(mean(p)/mean(p[which(p < quantile(p,0.05))]))
+
 result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "osqp")
-# result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "Rglpk")
+w <- result$weights
+p <- returns %*% w
+print(mean(p)/sd(p))
+
+result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "Rglpk")
+w <- result$weights
+p <- returns %*% w
+print(mean(p)/mean(p[which(p < quantile(p,0.05))]))
