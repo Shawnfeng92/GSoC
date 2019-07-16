@@ -39,23 +39,23 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
-Rglpk.result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "Rglpk", verbose = FALSE)
+mco.result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
 
 pso.result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "pso")
 
-Rglpk.w <- Rglpk.result$weights
+mco.w <- mco.result$weights
 pso.w <- pso.result$weights
 
-Rglpk.out <- mean(Rglpk.w)/ES(returns %*% Rglpk.w)
-pso.out <- mean(pso.w)/ES(returns %*% pso.w)
+mco.out <- mean(returns %*% mco.w) / ES(returns %*% mco.w)
+pso.out <- mean(returns %*% pso.w) / ES(returns %*% pso.w)
 
-print(Rglpk.out)
+print(mco.out)
 print(pso.out)
 
-print(sum(Rglpk.w))
+print(sum(mco.w))
 print(sum(pso.w))
 
-sapply(group_list, function(x){return(sum(Rglpk.w[x]))})
+sapply(group_list, function(x){return(sum(mco.w[x]))})
 sapply(group_list, function(x){return(sum(pso.w[x]))})
 
 
