@@ -30,3 +30,25 @@ dataset <- function(filelist = c("AMEX", "NYSE", "NASDAQ")){
 }
 
 data <- dataset()
+
+checkStop <- function(x) {
+  exist <- 0
+  period <- 0
+  for (i in length(x):1) {
+    if (!is.null(x[i])) {
+      exist <- 1
+      period <- 0
+    } 
+    else {
+      period <- period + 1
+    }
+    if (exist & (period >= 7)) {
+      return(TRUE)
+    }
+  }
+  return(FALSE)
+}
+
+checkTradable <- function(x) {
+  
+}
