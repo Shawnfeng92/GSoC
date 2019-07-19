@@ -16,7 +16,7 @@
 rm(list = ls())
 
 source("~/GitHub/PortfolioAnalytics/R/optimize.portfolio.R")
-data <- read.csv("~/GitHub/GSoC/data/.combined.csv")
+data <- read.csv("~/GitHub/GSoC/data/Returns/.combined.csv")
 returns <- xts(data[,2:ncol(data)], order.by = as.Date(as.character(data[,1])))
 
 ES <- function(x) {
@@ -38,25 +38,20 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         groups=group_list,
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
+pspec <- add.constraint(portfolio = pspec, type = "position_limit", max_pos = 6)
 
-mco.result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "mco")
+mco.portfolio <- returns %*% optimize.portfolio(returns, pspec, optimize_method = "mco")$weights
+GenSA.portfolio <- returns %*% optimize.portfolio(returns, pspec, optimize_method = "GenSA")$weights
 
-pso.result <- optimize.portfolio(R = returns, portfolio = pspec, optimize_method = "pso")
+meanOverES <- function(x){
+  mean(x)/ES(x)
+}
 
-mco.w <- mco.result$weights
-pso.w <- pso.result$weights
+meanOverES(mco.portfolio)
+meanOverES(GenSA.portfolio)
 
-mco.out <- mean(returns %*% mco.w) / ES(returns %*% mco.w)
-pso.out <- mean(returns %*% pso.w) / ES(returns %*% pso.w)
 
-print(mco.out)
-print(pso.out)
 
-print(sum(mco.w))
-print(sum(pso.w))
-
-sapply(group_list, function(x){return(sum(mco.w[x]))})
-sapply(group_list, function(x){return(sum(pso.w[x]))})
 
 
 

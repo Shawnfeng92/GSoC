@@ -52,3 +52,35 @@ checkStop <- function(x) {
 checkTradable <- function(x) {
   
 }
+
+simulateCov <- function(x) {
+  inequal <- function(x,y) {
+    existdate <- which(!is.na(x+y))
+    print(existdate)
+    cov(x[existdate], y[existdate])
+  }
+  
+  cl <- makeCluster(8)
+  registerDoSNOW(cl)
+  result <- foreach(i = 1:ncol(x), .combine = "rbind", .packages = c("doSNOW", "foreach")) %dopar% {
+    foreach(j = 1:ncol(x), .combine = "c") %dopar% {
+      inequal(x[,i], x[,j])
+    }
+  }
+  stopCluster(cl)
+  colnames(result) <- rownames(result) <- colnames(x)
+  return(result)
+}
+
+BFM <- matrix(rep(NA, 12*100), nrow = 100, ncol = 12)
+for (i in 1:12) {
+  x <-sample(1:100,1) 
+  BFM[x:100,i] <- round(rnorm(length(x:100)), 2)
+}
+
+simulateCov(BFM)
+
+
+
+
+
