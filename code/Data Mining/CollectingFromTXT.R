@@ -53,13 +53,16 @@ checkTradable <- function(x) {
   
 }
 
-simulateCov <- function(x) {
+inequal <- function(x,y) {
+  existdate <- which(!is.na(x+y))
+  cov(x[existdate], y[existdate])
+}
+
+simulateCovPar <- function(x) {
   inequal <- function(x,y) {
     existdate <- which(!is.na(x+y))
-    print(existdate)
     cov(x[existdate], y[existdate])
   }
-  
   cl <- makeCluster(8)
   registerDoSNOW(cl)
   result <- foreach(i = 1:ncol(x), .combine = "rbind", .packages = c("doSNOW", "foreach")) %dopar% {
@@ -72,14 +75,26 @@ simulateCov <- function(x) {
   return(result)
 }
 
-BFM <- matrix(rep(NA, 12*100), nrow = 100, ncol = 12)
-for (i in 1:12) {
-  x <-sample(1:100,1) 
-  BFM[x:100,i] <- round(rnorm(length(x:100)), 2)
+simulateCovSingle <- function(x) {
+  result <- c()
+  for (i in 1:ncol(x)) {
+    temp<- c()
+    for (j in 1:ncol(x)) {
+      temp <- c(temp, inequal(x[,i], x[,j]))
+    }
+    result <- rbind(result, temp)
+  }
+  return(result)
 }
 
-simulateCov(BFM)
+BFM <- matrix(rep(NA, 12000*1000), nrow = 1000, ncol = 12000)
+for (i in 1:12000) {
+  x <-sample(1:1000,1) 
+  BFM[x:1000,i] <- round(rnorm(length(x:1000)), 2)
+}
 
+system.time(x <- simulateCovPar(BFM))
+system.time(x <- simulateCovSingle(BFM))
 
 
 
