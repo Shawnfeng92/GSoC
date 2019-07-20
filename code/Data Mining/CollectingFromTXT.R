@@ -29,7 +29,7 @@ dataset <- function(filelist = c("AMEX", "NYSE", "NASDAQ")){
               Return = returns[-1,]))
 }
 
-data <- dataset()
+#data <- dataset()
 
 checkStop <- function(x) {
   exist <- 0
@@ -87,15 +87,22 @@ simulateCovSingle <- function(x) {
   return(result)
 }
 
-BFM <- matrix(rep(NA, 12000*1000), nrow = 1000, ncol = 12000)
-for (i in 1:12000) {
-  x <-sample(1:1000,1) 
-  BFM[x:1000,i] <- round(rnorm(length(x:1000)), 2)
+BFM <- function(N = 100, T = 2500){
+  result <- matrix(rep(NA, N*T), nrow = T, ncol = N)
+  for (i in 1:N) {
+    x <-sample(1:T,1) 
+    result[x:T,i] <- round(rnorm(length(x:T)), 2)
+  }
+  return(result)
 }
 
-system.time(x <- simulateCovPar(BFM))
-system.time(x <- simulateCovSingle(BFM))
+testTime <- function(N = 100, T = 2500)
+{
+  print(system.time(simulateCovPar(BFM(N, T))))
+  print(system.time(simulateCovSingle(BFM(N, T))))
+}
 
+testTime()
 
 
 
