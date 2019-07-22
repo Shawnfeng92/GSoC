@@ -63,14 +63,11 @@ simulateCovPar <- function(x) {
     existdate <- which(!is.na(x+y))
     cov(x[existdate], y[existdate])
   }
-  cl <- makeCluster(8)
-  registerDoSNOW(cl)
   result <- foreach(i = 1:ncol(x), .combine = "rbind", .packages = c("doSNOW", "foreach")) %dopar% {
     foreach(j = 1:ncol(x), .combine = "c") %dopar% {
       inequal(x[,i], x[,j])
     }
   }
-  stopCluster(cl)
   colnames(result) <- rownames(result) <- colnames(x)
   return(result)
 }
@@ -102,7 +99,11 @@ testTime <- function(N = 100, T = 2500)
   print(system.time(simulateCovSingle(BFM(N, T))))
 }
 
-testTime()
+cl <- makeCluster(8)
+registerDoSNOW(cl)
 
+testTime(N = 1000)
+
+stopCluster(cl)
 
 
