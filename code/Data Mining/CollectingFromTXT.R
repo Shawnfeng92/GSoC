@@ -7,13 +7,12 @@
 
 dataset <- function(filelist = c("AMEX", "NYSE", "NASDAQ")){
   Quandl.api_key("dU-ukkHjcYwUsDqmcvjB")
-  cl <- makeCluster(8)
-  registerDoSNOW(cl)
-  
+
   tickers <- foreach(i = filelist, .combine = "rbind") %dopar% {
     read.delim(file = paste0("~/GitHub/GSoC/data/Tickers/", i, ".txt"), 
                stringsAsFactors = FALSE)
   }
+  
   tickers <- as.character(tickers[,1])
   
   prices <- foreach(i = tickers, .combine = "cbind", .packages = "quantmod") %dopar% {
@@ -23,8 +22,8 @@ dataset <- function(filelist = c("AMEX", "NYSE", "NASDAQ")){
       temp 
     }
   }
-  stopCluster(cl)
-  returns <- diff(log(prices)) 
+
+  returns <- diff(log(prices))
   return(list(Price = prices,
               Return = returns[-1,]))
 }
@@ -102,7 +101,7 @@ testTime <- function(N = 100, T = 2500)
 cl <- makeCluster(8)
 registerDoSNOW(cl)
 
-testTime(N = 1000)
+testTime(N = 500)
 
 stopCluster(cl)
 
