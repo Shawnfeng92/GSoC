@@ -104,5 +104,3 @@ registerDoSNOW(cl)
 testTime(N = 500)
 
 stopCluster(cl)
-
-
