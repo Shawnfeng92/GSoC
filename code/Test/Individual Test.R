@@ -40,21 +40,4 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 pspec <- add.constraint(portfolio = pspec, type = "position_limit", max_pos = 6)
 
-mco.portfolio <- returns %*% optimize.portfolio(returns, pspec, optimize_method = "mco")$weights
-GenSA.portfolio <- returns %*% optimize.portfolio(returns, pspec, optimize_method = "GenSA")$weights
-
-meanOverES <- function(x){
-  mean(x)/ES(x)
-}
-
-meanOverES(mco.portfolio)
-meanOverES(GenSA.portfolio)
-
-
-
-
-
-
-
-
-
+x <- optimize.portfolio(returns, pspec, optimize_method = "mco", sil = 1)
