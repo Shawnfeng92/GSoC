@@ -185,7 +185,7 @@ stopCluster(cl)
 
 install.packages("SWIM")
 
-
+library(SWIM)
 
 
 
