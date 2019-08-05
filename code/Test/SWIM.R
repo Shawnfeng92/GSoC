@@ -1,2 +1,1 @@
-install.packages("SWIM")
-l
+library(SWIM)
