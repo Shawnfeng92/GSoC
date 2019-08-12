@@ -1357,6 +1357,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     
   } ## end case for GenSA
   
+  ## Start GSoC
+  
   ## case if method=osqp---Operator Splitting Solver for Quadratic Programs
   if(optimize_method=="osqp"){
     
@@ -1958,6 +1960,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       out$MCOoutput = minw
     }
   } ## end case for mco
+  
+  # End GSoC
   
   # Prepare for final object to return
   end_t <- Sys.time()
