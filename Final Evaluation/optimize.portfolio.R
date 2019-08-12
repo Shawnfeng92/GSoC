@@ -1819,6 +1819,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
   ## case if method=mco---Multiple Criteria Optimization Algorithms
   if(optimize_method == "mco"){
     
+    ## Check enviroment
     stopifnot("package:mco" %in% search() || requireNamespace("mco",quietly = TRUE))
     
     if((constraints$max_sum - constraints$min_sum) < 0.02){
