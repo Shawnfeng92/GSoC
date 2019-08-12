@@ -1643,6 +1643,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
   
   ## case if method=Rglpk--- R/GNU Linear Programming Kit Interface
   if(optimize_method=="Rglpk") {
+    
+    # Check enviroment
+    stopifnot("package:Rglpk" %in% search()  ||  require("Rglpk",quietly = TRUE) )
+    
     valid_risk <- c("CVaR", "ES", "AVaR", "ETL")
     valid_return <- c("mean")
     
