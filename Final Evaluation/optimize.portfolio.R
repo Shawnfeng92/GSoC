@@ -1362,6 +1362,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
   ## case if method=osqp---Operator Splitting Solver for Quadratic Programs
   if(optimize_method=="osqp"){
     
+    # Check enviroment
     stopifnot("package:osqp" %in% search()  ||  require("osqp",quietly = TRUE) )
     
     valid_constraints <- c("min_sum", "max_sum", "min", "max", 
