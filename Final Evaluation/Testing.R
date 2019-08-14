@@ -98,7 +98,7 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         groups=group_list,
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
-pspec <- add.constraint(portfolio = pspec, type = "position_limit", 6)
+pspec <- add.constraint(portfolio = pspec, type = "position_limit", max_pos = 6)
 posqp <- optimize.portfolio(returns, pspec, optimize_method = "osqp", sil = 1)
 pGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
 ppso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
