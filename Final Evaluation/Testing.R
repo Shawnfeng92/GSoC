@@ -24,7 +24,8 @@ ES <- function(x) {
   return(mean(x[which(x<quantile(x,0.05))]))
 }
 
-# test on 
+# comparison test on Rglpk
+# linear programming problems with mean return reward and ES risk
 
 pspec <- portfolio.spec(assets=colnames(returns))
 
@@ -39,8 +40,10 @@ group_list <- list(group1=c(1, 3, 5),
                    groupB=c(1, 3))
 pspec <- add.constraint(portfolio=pspec, type="group",
                         groups=group_list,
-                        group_min=c(0.15, 0.25, 0.2, 0.1),
+                        group_min=c(0.15, 0.25, 0.2, 0.1),s
                         group_max=c(0.65, 0.55, 0.5, 0.4))
-pspec <- add.constraint(portfolio = pspec, type = "position_limit", max_pos = 6)
-
-x <- optimize.portfolio(returns, pspec, optimize_method = "mco", sil = 1)
+pRglpk <- optimize.portfolio(returns, pspec, optimize_method = "Rglpk", sil = 1)
+pGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
+ppso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
+pDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
+prandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
