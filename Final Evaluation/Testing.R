@@ -48,10 +48,6 @@ lpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 lDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 lrandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-for (i in c(lRglpk, lGenSA, lpso, lDEoptim, lrandom)) {
-  print(i)
-}
-
 # comparison test on osqp
 # quadratic programming problems with mean return reward and sigma risk
 
@@ -75,10 +71,6 @@ qGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
 qpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 qDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 qrandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
-
-for (i in c(qsqp, qGenSA, qpso, qDEoptim, qrandom)) {
-  print(i)
-}
 
 # comparison test on mco
 # general convex optimize problems with mean return reward and sigma risk
@@ -105,9 +97,6 @@ ppso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 pDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 prandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-for (i in c(osqp, pGenSA, ppso, pDEoptim, prandom)) {
-  print(i)
-}
 
 
 
