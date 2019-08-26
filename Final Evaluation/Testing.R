@@ -140,7 +140,7 @@ ppso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 pDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 prandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-r3mco <- returns %*% pRglpk$weights
+r3mco <- returns %*% pmco$weights
 r3GenSA <- returns %*% pGenSA$weights
 r3pso <- returns %*% ppso$weights
 r3DEoptim <- returns %*% pDEoptim$weights
@@ -152,16 +152,15 @@ meanoveres <- c(mean(r3mco)/ES(r3mco),
                 mean(r3DEoptim)/ES(r3DEoptim),
                 mean(r3random)/ES(r3random))
 
-runningtimes <- c(pRglpk$elapsed_time,
+runningtimes <- c(pmco$elapsed_time,
                   pGenSA$elapsed_time,
                   ppso$elapsed_time,
                   pDEoptim$elapsed_time,
                   prandom$elapsed_time)
-result3 <- rbind(c("Rglpk", "GenSA", "pso", "DEoptim", "random"),
+result3 <- rbind(c("mco", "GenSA", "pso", "DEoptim", "random"),
                 meanoveres, 
                 runningtimes)
 
-PortfolioAnalytics:::get_constraints(pspec)
 
 
 
