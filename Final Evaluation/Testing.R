@@ -88,7 +88,7 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
-qosqp <- optimize.portfolio(returns, pspec, optimize_method = "osqp")
+qosqp <- optimize.portfolio(returns, pspec, optimize_method = "osqp", sil = 1)
 qGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
 qpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 qDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
@@ -161,7 +161,7 @@ result3 <- rbind(c("Rglpk", "GenSA", "pso", "DEoptim", "random"),
                 meanoveres, 
                 runningtimes)
 
-
+PortfolioAnalytics:::get_constraints(pspec)
 
 
 
