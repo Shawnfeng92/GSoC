@@ -79,11 +79,11 @@ qpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 qDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 qrandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-rRglpk <- returns %*% qRglpk$weights
-rGenSA <- returns %*% qGenSA$weights
-rpso <- returns %*% qpso$weights
-rDEoptim <- returns %*% qDEoptim$weights
-rrandom <- returns %*% qrandom$weights
+r2Rglpk <- returns %*% qRglpk$weights
+r2GenSA <- returns %*% qGenSA$weights
+r2pso <- returns %*% qpso$weights
+r2DEoptim <- returns %*% qDEoptim$weights
+r2random <- returns %*% qrandom$weights
 
 # comparison test on mco
 # general convex optimize problems with mean return reward and volatility risk
@@ -110,11 +110,11 @@ ppso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 pDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 prandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-pmco <- returns %*% pRglpk$weights
-pGenSA <- returns %*% pGenSA$weights
-ppso <- returns %*% ppso$weights
-pDEoptim <- returns %*% pDEoptim$weights
-prandom <- returns %*% prandom$weights
+r3mco <- returns %*% pRglpk$weights
+r3GenSA <- returns %*% pGenSA$weights
+r3pso <- returns %*% ppso$weights
+r3DEoptim <- returns %*% pDEoptim$weights
+r3random <- returns %*% prandom$weights
 
 
 
