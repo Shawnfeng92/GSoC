@@ -47,7 +47,7 @@ lGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
 lpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 lDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 lrandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
-
+lRglpk
 # comparison test on osqp
 # quadratic programming problems with mean return reward and volatility risk
 
