@@ -1369,7 +1369,6 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
                            "return_target", "groups", "group_labels", 
                            "cLO", "cUP")
     
-    print(constraints)
     
     for (i in names(constraints)) {
       if (!i %in% valid_constraints) {
