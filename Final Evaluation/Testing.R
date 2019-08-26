@@ -54,6 +54,21 @@ r1pso <- returns %*% lpso$weights
 r1DEoptim <- returns %*% lDEoptim$weights
 r1random <- returns %*% lrandom$weights
 
+meanoveres <- c(mean(r1Rglpk)/ES(r1Rglpk),
+                mean(r1GenSA)/ES(r1GenSA),
+                mean(r1pso)/ES(r1pso),
+                mean(r1DEoptim)/ES(r1DEoptim),
+                mean(r1random)/ES(r1random))
+
+runningtimes <- c(lRglpk$elapsed_time,
+                  lGenSA$elapsed_time,
+                  lpso$elapsed_time,
+                  lDEoptim$elapsed_time,
+                  lrandom$elapsed_time)
+result1 <- rbind(c("Rglpk", "GenSA", "pso", "DEoptim", "random"),
+                meanoveres, 
+                runningtimes)
+
 # comparison test on osqp
 # quadratic programming problems with mean return reward and volatility risk
 
@@ -73,17 +88,32 @@ pspec <- add.constraint(portfolio=pspec, type="group",
                         group_min=c(0.15, 0.25, 0.2, 0.1),
                         group_max=c(0.65, 0.55, 0.5, 0.4))
 
-qosqp <- optimize.portfolio(returns, pspec, optimize_method = "osqp", sil = 1)
+qosqp <- optimize.portfolio(returns, pspec, optimize_method = "osqp")
 qGenSA <- optimize.portfolio(returns, pspec, optimize_method = "GenSA")
 qpso <- optimize.portfolio(returns, pspec, optimize_method = "pso")
 qDEoptim <- optimize.portfolio(returns, pspec, optimize_method = "DEoptim")
 qrandom <- optimize.portfolio(returns, pspec, optimize_method = "random")
 
-r2Rglpk <- returns %*% qRglpk$weights
+r2osqp <- returns %*% qosqp$weights
 r2GenSA <- returns %*% qGenSA$weights
 r2pso <- returns %*% qpso$weights
 r2DEoptim <- returns %*% qDEoptim$weights
 r2random <- returns %*% qrandom$weights
+
+meanoversigma <- c(mean(r2osqp)/sd(r2osqp),
+                mean(r2GenSA)/sd(r2GenSA),
+                mean(r2pso)/sd(r2pso),
+                mean(r2DEoptim)/sd(r2DEoptim),
+                mean(r2random)/sd(r2random))
+
+runningtimes <- c(qosqp$elapsed_time,
+                  qGenSA$elapsed_time,
+                  qpso$elapsed_time,
+                  qDEoptim$elapsed_time,
+                  qrandom$elapsed_time)
+result2 <- rbind(c("osqp", "GenSA", "pso", "DEoptim", "random"),
+                 meanoversigma, 
+                runningtimes)
 
 # comparison test on mco
 # general convex optimize problems with mean return reward and volatility risk
@@ -116,7 +146,20 @@ r3pso <- returns %*% ppso$weights
 r3DEoptim <- returns %*% pDEoptim$weights
 r3random <- returns %*% prandom$weights
 
+meanoveres <- c(mean(r3mco)/ES(r3mco),
+                mean(r3GenSA)/ES(r3GenSA),
+                mean(r3pso)/ES(r3pso),
+                mean(r3DEoptim)/ES(r3DEoptim),
+                mean(r3random)/ES(r3random))
 
+runningtimes <- c(pRglpk$elapsed_time,
+                  pGenSA$elapsed_time,
+                  ppso$elapsed_time,
+                  pDEoptim$elapsed_time,
+                  prandom$elapsed_time)
+result3 <- rbind(c("Rglpk", "GenSA", "pso", "DEoptim", "random"),
+                meanoveres, 
+                runningtimes)
 
 
 
