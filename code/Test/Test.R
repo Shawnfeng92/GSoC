@@ -97,3 +97,5 @@ pspec.EqRiskES <- add.objective(pspec.minES,
 # penalized. The portfolio concentration is defined as the Herfindahl Hirschman 
 # Index of the weights. 
 pspec.conc <- add.objective(pspec, type="weight_concentration", name="HHI", conc_aversion=0.01)
+
+optimize.portfolio(R = returns, portfolio = pspec.maxMean, optimize_method = "DEoptim")
