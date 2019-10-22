@@ -2,7 +2,7 @@ library(PortfolioAnalytics)
 source("~/GitHub/GSoC/optimize.portfolio.R")
 
 data(edhec)
-returns <- edhec
+returns <- edhec[,1:4]
 fund.names <- colnames(returns)
 pspec <- portfolio.spec(assets = fund.names)
 
@@ -69,20 +69,31 @@ pspec.minStdDev <- add.objective(pspec, type="risk", name="StdDev")
 
 # Creates a new portfolio object using pspec and adds ES as an objective. 
 # Note that arguments to ES are passed in as a named list. 
-pspec.minES <- add.objective(pspec, type="risk", name="ES", arguments=list(p=0.925, clean="boudt")) 
+pspec.minES <- add.objective(pspec, 
+                             type="risk", 
+                             name="ES", 
+                             arguments=list(p=0.925, clean="boudt")) 
 
 # Creates a new portfolio object using pspec.minES and adds a risk budget 
 # objective with limits on component risk contribution. 
 # Note that arguments to ES are passed in as a named list. 
-pspec.RiskBudgetES <- add.objective(pspec.minES, type="risk_budget", name="ES", arguments=list(p=0.925, clean="boudt"), min_prisk=0, max_prisk=0.6) 
+pspec.RiskBudgetES <- add.objective(pspec.minES, 
+                                    type="risk_budget", 
+                                    name="ES", 
+                                    arguments=list(p=0.925, clean="boudt"), 
+                                    min_prisk=0, max_prisk=0.6) 
 
 # Creates a new portfolio object using pspec.minES and adds a risk budget 
 # objective with equal component risk contribution. 
 # Note that arguments to ES are passed in as a named list. 
-pspec.EqRiskES <- add.objective(pspec.minES, type="risk_budget", name="ES", arguments=list(p=0.925, clean="boudt"), min_concentration=TRUE) 
+pspec.EqRiskES <- add.objective(pspec.minES, 
+                                type="risk_budget", 
+                                name="ES", 
+                                arguments=list(p=0.925, clean="boudt"), 
+                                min_concentration=TRUE) 
 
 # Creates a new portfolio object using pspec and adds a weight_concentration 
 # objective. The conc_aversion parameter controls how much concentration is 
 # penalized. The portfolio concentration is defined as the Herfindahl Hirschman 
 # Index of the weights. 
-pspec.conc <- add.objective(pspec, type="weight_concentration", name="HHI", conc_aversion=0.01) 
+pspec.conc <- add.objective(pspec, type="weight_concentration", name="HHI", conc_aversion=0.01)
