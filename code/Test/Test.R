@@ -98,4 +98,4 @@ pspec.EqRiskES <- add.objective(pspec.minES,
 # Index of the weights. 
 pspec.conc <- add.objective(pspec, type="weight_concentration", name="HHI", conc_aversion=0.01)
 
-optimize.portfolio(R = returns, portfolio = pspec.maxMean, optimize_method = "DEoptim")
+optimize.portfolio(R = returns, portfolio = pspec.maxMean, optimize_method = "pso")
