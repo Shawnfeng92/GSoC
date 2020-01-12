@@ -2308,6 +2308,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       upper.bounds = constraints$max
     )
     
+    print(mco.result)
+    
   } ## end case for mco
   
   # Prepare for final object to return
