@@ -2002,7 +2002,6 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         # optimization objective function
         reward <- ifelse(objective$name == "mean", TRUE, reward)
         risk <- ifelse(objective$name %in% valid_objnames[2:6], TRUE, risk)
-        arguments <- objective$arguments
       }
     }
     
@@ -2044,11 +2043,14 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       osqp.A <- rep(1, N)
       osqp.l <- min_sum 
       osqp.u <- max_sum
+      osqp.rnames <- c("sum")
       
       # box constraint
       osqp.A <- rbind(osqp.A, diag(1, N))
       osqp.l <- c(osqp.l, lower)
       osqp.u <- c(osqp.u, upper)
+      osqp.rnames <- c(osqp.rnames, 
+                       rep("box", N))
       
       # group constraint
       if (!is.null(constraints$groups)) {
@@ -2069,6 +2071,9 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           osqp.u <- c(osqp.u, constraints$cUP[i])
         }
         rm(temp)
+        osqp.rnames <- c(osqp.rnames,
+                         rep("group", 
+                             length(constraints$groups)))
       }
       
       # return target constraint
@@ -2078,6 +2083,15 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
                          target, 
                          max(target, constraints$return_target)))
       osqp.u <- c(osqp.u, Inf)
+      osqp.rnames <- c(osqp.rnames,
+                       "target")
+      
+      rownames(osqp.A) <- osqp.rnames
+      colnames(osqp.A) <- colnames(R)
+      
+      View(osqp.A)
+      View(osqp.l)
+      View(osqp.u)
       
       # result from solver
       osqp.result <- solve_osqp(
@@ -2144,6 +2158,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       osqp.A <- rbind(osqp.A, c(colMeans(R), 0))
       osqp.l <- c(osqp.l, 1)
       osqp.u <- c(osqp.u, 1)
+      
+      View(osqp.A)
+      View(osqp.l)
+      View(osqp.u)
       
       # result from solver
       osqp.result <- solve_osqp(
