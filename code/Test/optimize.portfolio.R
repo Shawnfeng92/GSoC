@@ -1984,6 +1984,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     valid_objnames <- c("mean", "sigma", "StdDev", "var", "volatility",
                         "sd")
     
+    # default risk and reward parameter
+    reward <- FALSE
+    risk <- FALSE
+    
     # search invalid objectives
     for (objective in portfolio$objectives){
       if (objective$enabled){
@@ -1996,8 +2000,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         target <- ifelse(!is.null(objective$target), objective$target, - Inf)
         
         # optimization objective function
-        reward <- ifelse(objective$name == "mean", TRUE, FALSE)
-        risk <- ifelse(objective$name %in% valid_objnames[2:6], TRUE, FALSE)
+        reward <- ifelse(objective$name == "mean", TRUE, reward)
+        risk <- ifelse(objective$name %in% valid_objnames[2:6], TRUE, risk)
         arguments <- objective$arguments
       }
     }
@@ -2090,17 +2094,17 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       
       # leverage constraint
       osqp.A <- c(rep(1, N), -min_sum)
-      osqp.A <- c(rep(-1, N), max_sum)
+      osqp.A <- rbind(osqp.A, c(rep(-1, N), max_sum))
       osqp.l <- c(0, 0)
       osqp.u <- c(Inf, Inf)
-      
+  
       # box constraint
       osqp.A <- rbind(osqp.A, 
                       cbind(diag(1, N), -lower))
       osqp.A <- rbind(osqp.A, 
                       cbind(diag(-1, N), upper))
-      osqp.l <- c(osqp.l, 0, 0)
-      osqp.u <- c(osqp.u, Inf, Inf)
+      osqp.l <- c(osqp.l, rep(0, 2 * N))
+      osqp.u <- c(osqp.u, rep(Inf, 2 * N))
       
       # group constraint
       if (!is.null(constraints$groups)) {
@@ -2138,8 +2142,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       
       # shrinkage constraint
       osqp.A <- rbind(osqp.A, c(colMeans(R), 0))
-      osqp.l <- c(osqp.l, 1 + 0.0001)
-      osqp.u <- c(osqp.u, 1 - 0.0001)
+      osqp.l <- c(osqp.l, 1)
+      osqp.u <- c(osqp.u, 1)
       
       # result from solver
       osqp.result <- solve_osqp(
@@ -2150,6 +2154,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         u = osqp.u,
         pars = osqpSettings(verbose = FALSE))
     }
+    return(osqp.result)
   } ## end case for osqp
   
   ## case if method = mco -- Multi-criteria Optimization
@@ -2172,39 +2177,38 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       for (objective in portfolio$objectives) {
         if (objective$enabled) {
           # grab reward
-          reward <- ifelse(objective$name == "mean", 
-                           t(w) %*% colMeans(R),
-                           reward)
+          reward <- switch((objective$name == "mean") + 1,
+                           reward,
+                           t(w) %*% colMeans(R))
           # grab risk
-          if (objective$type == "risk") {
-            if (objective$name %in% c("sigma", "StdDev")) {
-              risk <- "sd"
-            } 
-            else if (objective$name %in% c("CVaR", "ES")) {
-              risk <- "ES"
-              
-              # grab alpha 
-              alpha <- ifelse(
-                is.null(objective$arguments[["p"]]),
-                alpha,
-                objective$arguments[["p"]]
-              )
-              
-              # check alpha
-              alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
-            }
+          if (objective$name %in% c("sigma", "StdDev")) {
+            risk <- "sd"
+          } 
+          else if (objective$name %in% c("CVaR", "ES")) {
+            risk <- "ES"
+            
+            # grab alpha 
+            alpha <- switch(
+              is.null(objective$arguments[["p"]]) + 1,
+              objective$arguments[["p"]],
+              alpha
+            )
+            
+            # check alpha
+            alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
           }
           
+          
           # grab lambda
-          if (objective$type == "quadratic_utility")
-            lambda <- ifelse(is.null(objective$risk_aversion), 
-                             lambda,
-                             objective$risk_aversion)
+          lambda <- switch(is.null(objective$risk_aversion) + 1, 
+                           objective$risk_aversion,
+                           lambda
+                           )
         }
       }
       
       # outputs
-      if (risk == "sigma") {
+      if (risk == "sd") {
         risk <- sqrt(t(w) %*% cov(R) %*% w)
         
         # min volatility
@@ -2258,7 +2262,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       
       # diversity constraint
       result <- result - 
-        max(1 - sum(w^2) - constraints$div_target,
+        max(constraints$div_target - 1 + sum(w^2),
             0, na.rm = TRUE)
       
       # group constraint
@@ -2292,7 +2296,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
               == length(constraints$groups)))
         stop("Please assign group constraint")
       if(!is.null(constraints$group_pos))
-        if(length(constraints$groups_pos) 
+        if(length(constraints$group_pos) 
            != length(constraints$groups))
           stop("Please assign group constraint")
     }
@@ -2308,7 +2312,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       upper.bounds = constraints$max
     )
     
-    print(mco.result)
+    return(mco.result)
     
   } ## end case for mco
   
