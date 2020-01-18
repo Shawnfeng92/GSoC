@@ -2266,38 +2266,38 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       result <- 0
       
       # leverage constraint
-      result <- result - max(sum(w) - constraints$max_sum, 0)
-      result <- result - max(constraints$min_sum - sum(w), 0)
+      result <- result - 999 * max(sum(w) > constraints$max_sum, 0)
+      result <- result - 999 * max(constraints$min_sum > sum(w), 0)
      
       # position limitation
       result <- result - 
-        max(sum(w != 0) - constraints$max_pos, 0, na.rm = TRUE)
+        999 * max(sum(w != 0) > constraints$max_pos, 0, na.rm = TRUE)
       
       # return target
       result <- result - 
-        max(t(w) %*% colMeans(R) - constraints$return_target,
+        999 * max(t(w) %*% colMeans(R) < constraints$return_target,
             0, na.rm = TRUE)
       
       # diversity constraint
       result <- result - 
-        max(constraints$div_target - 1 + sum(w^2),
+        999 * max(constraints$div_target > (1 - sum(w^2)),
             0, na.rm = TRUE)
       
       # group constraint
       if (!is.null(constraints$groups)) {
         for (i in 1:length(constraints$groups)) {
           result <- result -
-            max(sum(w[constraints$groups[[i]]]) - constraints$cUP[i], 
+            999 * max(sum(w[constraints$groups[[i]]]) > constraints$cUP[i], 
                 0, na.rm = TRUE)
           result <- result - 
-            max(constraints$cLO[i] - sum(w[constraints$groups[[i]]]),
+            999 * max(constraints$cLO[i] > sum(w[constraints$groups[[i]]]),
                 0, na.rm = TRUE)
         }
         if (!is.null(constraints$group_pos)) {
           for (i in 1:length(constraints$groups)) {
             temp <- w[constraints$groups[[i]]]
             result <- result - 
-              max(sum(w != 0) - constraints$group_pos[i],
+              999 * max(sum(temp != 0) > constraints$group_pos[i],
                   0, na.rm = TRUE)
           }
         }
