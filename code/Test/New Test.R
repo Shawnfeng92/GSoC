@@ -46,10 +46,10 @@ pspec <- add.constraint(
 pspec <- add.constraint(
   portfolio = pspec,
   type = "return",
-  return_target = 0.005
+  return_target = 0.05
 )
 
-pspec <- add.objective(pspec, type = "return", name = "mean")
+# pspec <- add.objective(pspec, type = "return", name = "mean")
 pspec <- add.objective(pspec, type = "risk", name = "StdDev")
 
 osqp.result <- optimize.portfolio(
@@ -58,4 +58,20 @@ osqp.result <- optimize.portfolio(
   message = FALSE
 )
 
+mco.result <- optimize.portfolio(
+  R = returns, portfolio = pspec,
+  optimize_method = "mco", trace = FALSE,
+  message = FALSE
+)
+
+GenSA.result <- optimize.portfolio(
+  R = returns, portfolio = pspec,
+  optimize_method = "GenSA", trace = FALSE,
+  message = FALSE
+)
+
 PortfolioAnalytics:::check_constraints(osqp.result$x, pspec)
+
+sqrt(t(mco.result$par[1,]) %*% cov(returns) %*% mco.result$par[1,])
+sqrt(t(osqp.result$x) %*% cov(returns) %*% osqp.result$x)
+sqrt(t(GenSA.result$weights) %*% cov(returns) %*% GenSA.result$weights)
