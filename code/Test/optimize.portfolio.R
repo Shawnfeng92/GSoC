@@ -2089,9 +2089,9 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       rownames(osqp.A) <- osqp.rnames
       colnames(osqp.A) <- colnames(R)
       
-      View(osqp.A)
-      View(osqp.l)
-      View(osqp.u)
+      View(round(osqp.A, 2))
+      View(round(osqp.u, 2))
+      View(round(osqp.l, 2))
       
       # result from solver
       osqp.result <- solve_osqp(
@@ -2198,27 +2198,28 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           reward <- switch((objective$name == "mean") + 1,
                            reward,
                            t(w) %*% colMeans(R))
-          # grab risk
-          if (objective$name %in% c("sigma", "StdDev")) {
-            risk <- "sd"
-          } 
-          else if (objective$name %in% c("CVaR", "ES")) {
-            risk <- "ES"
-            
-            # grab alpha 
-            alpha <- switch(
-              is.null(objective$arguments[["p"]]) + 1,
-              objective$arguments[["p"]],
-              alpha
-            )
-            
-            # check alpha
-            alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
-          }
           
+          # grab risk
+          risk <- switch(
+            function() {
+              if (objective$name %in% c("sigma", "StdDev")) return(1)
+              if (objective$name %in% c("CVaR", "ES")) return(2)
+            },
+            "sd", "ES"
+            )
+          
+          # grab alpha 
+          alpha <- switch(
+            is.null(objective$arguments[["p"]]) + 1,
+            objective$arguments[["p"]],
+            alpha
+          )
+          
+          # check alpha
+          alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
           
           # grab lambda
-          lambda <- switch(is.null(objective$risk_aversion) + 1, 
+            lambda <- switch(is.null(objective$risk_aversion) + 1, 
                            objective$risk_aversion,
                            lambda
                            )
@@ -2252,6 +2253,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         
         # max STARR 
         return(reward / risk)
+      }
+      
+      else {
+        return(- R %*% w)
       }
     }
     
@@ -2320,7 +2325,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     }
     
     # result from solver
-    mco.result <- nsga2(
+    mco.result <- try(nsga2(
       fn = mco.fn, 
       idim = mco.idim, 
       odim = mco.odim,
@@ -2328,10 +2333,30 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       cdim = 1,
       lower.bounds = constraints$min,
       upper.bounds = constraints$max
-    )
+    ))
     
-    return(mco.result)
+    # null result
+    if(inherits(mco.result,"try-error")) mco.result <- NULL
+    if(is.null(mco.result)) {
+      message(paste("Optimizer was unable to find a solution for target"))
+      return (paste("Optimizer was unable to find a solution for target"))
+    }
     
+    # prepare output
+    weights <- as.vector(mco.result$par[1, ])
+    weights <- normalize_weights(weights)
+    names(weights) <- colnames(R)
+    obj_vals <- constrained_objective(
+      w = weights, R = R, portfolio = portfolio, 
+      trace = TRUE, env = dotargs)$objective_measures
+    out <- list(weights = weights, 
+               objective_measures = obj_vals,
+               opt_values = obj_vals,
+               out = mco.result$value[1, 1], 
+               call = call)
+    if (isTRUE(trace)){
+      out$mcooutput <- mco.result
+    }
   } ## end case for mco
   
   # Prepare for final object to return
