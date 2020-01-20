@@ -48,14 +48,14 @@ pspec <- add.constraint(
   group_max = c(0.5, 0.6)
 )
 
-# pspec <- add.constraint(
-#   portfolio = pspec,
-#   type = "return",
-#   return_target = 0.005
-# )
+pspec <- add.constraint(
+  portfolio = pspec,
+  type = "position_limit",
+  max_pos = 5
+)
 
-# pspec <- add.objective(pspec, type = "return", name = "mean")
-pspec <- add.objective(pspec, type = "risk", name = "ES")
+pspec <- add.objective(pspec, type = "return", name = "mean")
+# pspec <- add.objective(pspec, type = "risk", name = "ES")
 
 Rglpk.result <- optimize.portfolio(
   R = returns, portfolio = pspec,
