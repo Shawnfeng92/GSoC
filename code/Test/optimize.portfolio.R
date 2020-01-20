@@ -1366,6 +1366,12 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     # Rglpk solver can only solve linear programming problems
     valid_objnames <- c("mean", "CVaR", "ES", "ETL")
   
+    #default setting
+    target <- -Inf
+    alpha <- 0.05
+    reward <- FALSE
+    risk <- FALSE
+    
     # search invalid objectives
     for (objective in portfolio$objectives){
       if (objective$enabled){
@@ -1375,18 +1381,22 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # alpha
-        alpha <- ifelse(!is.null(objective$alpha), objective$alpha, 0.05)
-        alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
+        alpha <- ifelse(!is.null(objective$arguments[["p"]]), 
+                        objective$arguments[["p"]], alpha)
         
         # return target
-        target <- ifelse(!is.null(objective$target), objective$target, - Inf)
+        target <- ifelse(!is.null(objective$target), objective$target, target)
         
         # optimization objective function
-        reward <- ifelse(objective$name == "mean", TRUE, FALSE)
-        risk <- ifelse(objective$name %in% valid_objnames[2:4], TRUE, FALSE)
+        reward <- ifelse(objective$name == "mean", TRUE, reward)
+        risk <- ifelse(objective$name %in% valid_objnames[2:4], TRUE, risk)
         arguments <- objective$arguments
       }
     }
+    
+    # trim alpha and target
+    alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
+    target <- max(target, constraints$return_target, na.rm = TRUE)
     
     # get leverage paramters from constraints
     max_sum <- constraints$max_sum
@@ -1414,7 +1424,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     # limitation; the other one for situation with position limitation.
     # This will keep code clean and accelerate simple case process speed.
     
-    if (!is.null(constraints$max_pos) & !is.null(constraints$group_pos)) {
+    if (is.null(constraints$max_pos) & is.null(constraints$group_pos)) {
       # deploy optimization for different types situations
       # max return case
       if (reward & !risk) {
@@ -1458,12 +1468,11 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, colMeans(R))
-        Rglpk.dir <- c(Rglpk.dir, ">=")
-        Rglpk.rhs <- c(Rglpk.rhs, 
-                           ifelse(is.null(constraints$return_target),
-                                  target, 
-                                  max(target, constraints$return_target)))
+        if (!is.infinite(target)) {
+          Rglpk.mat <- rbind(Rglpk.mat, colMeans(R))
+          Rglpk.dir <- c(Rglpk.dir, ">=")
+          Rglpk.rhs <- c(Rglpk.rhs, target)
+        }
         
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
@@ -1475,9 +1484,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
             types = rep("C", N),
             max = TRUE
           )
+        return(Rglpk.result)
       }
       
-      # min VaR case
+      # min CVaR case
       else if (risk & !reward) {
         # utility function coef: weight + loss + VaR
         Rglpk.obj <- c(
@@ -1523,12 +1533,27 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, c(colMeans(R), rep(0, T + 1)))
-        Rglpk.dir <- c(Rglpk.dir, ">=")
-        Rglpk.rhs <- c(Rglpk.rhs, 
-                       ifelse(is.null(constraints$return_target),
-                              target, 
-                              max(target, constraints$return_target)))
+        if (!is.infinite(target)) {
+          Rglpk.mat <- rbind(Rglpk.mat, colMeans(R))
+          Rglpk.dir <- c(Rglpk.dir, ">=")
+          Rglpk.rhs <- c(Rglpk.rhs, target)
+        }
+        
+        # scenario constraint
+        Rglpk.mat <- rbind(Rglpk.mat,
+                           cbind(
+                             matrix(returns, T),
+                             diag(1, T),
+                             rep(1, T)
+                             )
+                           )
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", T))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, T))
+        
+        View(Rglpk.obj)
+        View(Rglpk.mat)
+        View(Rglpk.rhs)
+        View(Rglpk.bound)
         
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
@@ -1540,9 +1565,10 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           types = rep("C", N + T + 1),
           max = TRUE
         )
+        return(Rglpk.result)
       }
       
-      # min ratio
+      # max ratio
       else if (risk & reward) {
         # utility function coef: weight + loss + VaR + shrinkage
         Rglpk.obj <- c(
@@ -1625,6 +1651,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           types = rep("C", N + T + 2),
           max = TRUE
         )
+        return(Rglpk.result)
       }
     }
     
@@ -1678,7 +1705,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           }
           
           # group postion limitation
-          if (!is.null(constaints$group_pos)) {
+          if (!is.null(constraints$group_pos)) {
             # check group position limitation length
             if(length(constraints$group_pos) 
                != length(constraints$groups))
@@ -1782,7 +1809,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           }
           
           # group postion limitation
-          if (!is.null(constaints$group_pos)) {
+          if (!is.null(constraints$group_pos)) {
             # check group position limitation length
             if(length(constraints$group_pos) 
                != length(constraints$groups))
@@ -1987,6 +2014,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
     # default risk and reward parameter
     reward <- FALSE
     risk <- FALSE
+    target <- -Inf
     
     # search invalid objectives
     for (objective in portfolio$objectives){
@@ -1997,13 +2025,16 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target
-        target <- ifelse(!is.null(objective$target), objective$target, - Inf)
+        target <- ifelse(!is.null(objective$target), objective$target, target)
         
         # optimization objective function
         reward <- ifelse(objective$name == "mean", TRUE, reward)
         risk <- ifelse(objective$name %in% valid_objnames[2:6], TRUE, risk)
       }
     }
+    
+    # trim target return
+    target <- max(target, constraints$return_target, na.rm = TRUE)
     
     # get leverage paramters from constraints
     max_sum <- constraints$max_sum
@@ -2077,40 +2108,61 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       }
       
       # return target constraint
-      osqp.A <- rbind(osqp.A, colMeans(R))
-      osqp.l <- c(osqp.l, 
-                  ifelse(is.null(constraints$return_target),
-                         target, 
-                         max(target, constraints$return_target)))
-      osqp.u <- c(osqp.u, Inf)
-      osqp.rnames <- c(osqp.rnames,
-                       "target")
+      if (!is.infinite(target)) {
+        osqp.A <- rbind(osqp.A, colMeans(R))
+        osqp.l <- c(osqp.l, target)
+        osqp.u <- c(osqp.u, Inf)
+        osqp.rnames <- c(osqp.rnames, "target")
+      }
       
-      rownames(osqp.A) <- osqp.rnames
+      rownames(osqp.A) <- 
+        names(osqp.u) <-
+        names(osqp.l) <- osqp.rnames
       colnames(osqp.A) <- colnames(R)
       
-      View(round(osqp.A, 2))
-      View(round(osqp.u, 2))
-      View(round(osqp.l, 2))
-      
       # result from solver
-      osqp.result <- solve_osqp(
+      osqp.result <- try(solve_osqp(
         P = osqp.P, 
         q = osqp.q, 
         A = osqp.A, 
         l = osqp.l, 
         u = osqp.u,
-        pars = osqpSettings(verbose = FALSE))
+        pars = osqpSettings(verbose = FALSE)))
+      
+      # null result
+      if(inherits(osqp.result,"try-error")) osqp.result <- NULL
+      if(is.null(osqp.result)) {
+        message(paste("Optimizer was unable to find a solution for target"))
+        return (paste("Optimizer was unable to find a solution for target"))
+      }
+      
+      # prepare output
+      weights <- as.vector(osqp.result$x)
+      weights <- normalize_weights(weights)
+      names(weights) <- colnames(R)
+      obj_vals <- constrained_objective(
+        w = weights, R = R, portfolio = portfolio, 
+        trace = TRUE, env = dotargs)$objective_measures
+      out <- list(weights = weights, 
+                  objective_measures = obj_vals,
+                  opt_values = obj_vals,
+                  out = osqp.result$info$obj_val, 
+                  call = call)
+      if (isTRUE(trace)){
+        out$osqpoutput <- osqp.result
+      }
     }
     else {
       osqp.P <- cbind(rbind(cov(R), rep(0, N)), rep(0, N + 1))
       osqp.q <- rep(0, N + 1)
+      osqp.rnames <- c()
       
       # leverage constraint
       osqp.A <- c(rep(1, N), -min_sum)
       osqp.A <- rbind(osqp.A, c(rep(-1, N), max_sum))
       osqp.l <- c(0, 0)
       osqp.u <- c(Inf, Inf)
+      osqp.rnames <- c("min.sum", "max.sum")
   
       # box constraint
       osqp.A <- rbind(osqp.A, 
@@ -2119,6 +2171,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
                       cbind(diag(-1, N), upper))
       osqp.l <- c(osqp.l, rep(0, 2 * N))
       osqp.u <- c(osqp.u, rep(Inf, 2 * N))
+      osqp.rnames <- c(osqp.rnames, rep("Box", 2 * N))
       
       # group constraint
       if (!is.null(constraints$groups)) {
@@ -2141,123 +2194,151 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           osqp.l <- c(osqp.l, 0, 0)
           osqp.u <- c(osqp.u, Inf, Inf)
         }
+        
+        osqp.rnames <- c(osqp.rnames, rep("Group", 
+                                          2 * length(constraints$groups)))
         rm(temp)
       }
       
       # return target constraint
-      osqp.A <- rbind(osqp.A, 
-                      c(rep(0, N), 
-                        ifelse(
-                          is.null(constraints$return_target),
-                          target, 
-                          max(target, constraints$return_target))))
-      osqp.l <- c(osqp.l, -Inf)
-      osqp.u <- c(osqp.u, 1)
+      if (!is.infinite(target)) {
+        osqp.A <- rbind(osqp.A, c(rep(0, N), target))
+        osqp.l <- c(osqp.l, -Inf)
+        osqp.u <- c(osqp.u, 1)
+        osqp.rnames <- c(osqp.rnames, "target")
+      }
       
       # shrinkage constraint
       osqp.A <- rbind(osqp.A, c(colMeans(R), 0))
       osqp.l <- c(osqp.l, 1)
       osqp.u <- c(osqp.u, 1)
+      osqp.A <- rbind(osqp.A, c(rep(0, N), 1))
+      osqp.l <- c(osqp.l, 0)
+      osqp.u <- c(osqp.u, Inf)
+      osqp.rnames <- c(osqp.rnames, rep("Shrinkage", 2))
       
-      View(osqp.A)
-      View(osqp.l)
-      View(osqp.u)
+      rownames(osqp.A) <- 
+        names(osqp.u) <-
+        names(osqp.l) <- osqp.rnames
+      colnames(osqp.A) <- c(colnames(R), "Shrinkage")
       
       # result from solver
-      osqp.result <- solve_osqp(
+      osqp.result <- try(solve_osqp(
         P = osqp.P, 
         q = osqp.q, 
         A = osqp.A, 
         l = osqp.l, 
         u = osqp.u,
-        pars = osqpSettings(verbose = FALSE))
+        pars = osqpSettings(verbose = FALSE)))
+      
+      # null result
+      if(inherits(osqp.result,"try-error")) osqp.result <- NULL
+      if(is.null(osqp.result)) {
+        message(paste("Optimizer was unable to find a solution for target"))
+        return (paste("Optimizer was unable to find a solution for target"))
+      }
+      
+      # prepare output
+      weights <- as.vector(osqp.result$x[1:N] / osqp.result$x[N + 1])
+      weights <- normalize_weights(weights)
+      names(weights) <- colnames(R)
+      obj_vals <- constrained_objective(
+        w = weights, R = R, portfolio = portfolio, 
+        trace = TRUE, env = dotargs)$objective_measures
+      out <- list(weights = weights, 
+                  objective_measures = obj_vals,
+                  opt_values = obj_vals,
+                  out = osqp.result$info$obj_val, 
+                  call = call)
+      if (isTRUE(trace)){
+        out$osqpoutput <- osqp.result
+      }
     }
-    return(osqp.result)
   } ## end case for osqp
   
   ## case if method = mco -- Multi-criteria Optimization
   if (optimize_method == "mco") {
     # utility function
     mco.fn <- function(w) {
-      # default reward
-      reward <- NULL
+      # default return index
+      mco.return <- FALSE
       
-      # default risk
-      risk <- NULL
+      # default risk index
+      mco.risk <- FALSE
       
       # default lambda
-      lambda <- NULL
+      mco.lambda <- FALSE
       
       # default alpha
-      alpha <- 0.05
+      mco.alpha <- 0.05
       
       # search reward and risk in active objectives
       for (objective in portfolio$objectives) {
         if (objective$enabled) {
           # grab reward
-          reward <- switch((objective$name == "mean") + 1,
-                           reward,
-                           t(w) %*% colMeans(R))
+          mco.return <- ifelse(objective$name == "mean",
+                           t(w) %*% colMeans(R),
+                           mco.return)
           
           # grab risk
-          risk <- switch(
-            function() {
-              if (objective$name %in% c("sigma", "StdDev")) return(1)
-              if (objective$name %in% c("CVaR", "ES")) return(2)
-            },
-            "sd", "ES"
+          mco.risk <- switch(
+            objective$name,
+            "ES" = 1,
+            "CVaR" = 1,
+            "TVaR" = 1,
+            "sigma" = 2,
+            "volitility" = 2,
+            "StdDev" = 2,
+            "sd" = 2
             )
           
+          # check risk
+          mco.risk <- ifelse(is.null(mco.risk), FALSE, mco.risk)
+          
           # grab alpha 
-          alpha <- switch(
+          mco.alpha <- switch(
             is.null(objective$arguments[["p"]]) + 1,
             objective$arguments[["p"]],
-            alpha
+            mco.alpha
           )
           
           # check alpha
-          alpha <- ifelse(alpha > 0.5, 1 - alpha, alpha)
+          mco.alpha <- ifelse(mco.alpha > 0.5, 1 - mco.alpha, mco.alpha)
           
           # grab lambda
-            lambda <- switch(is.null(objective$risk_aversion) + 1, 
-                           objective$risk_aversion,
-                           lambda
-                           )
+          mco.lambda <- ifelse(is.null(objective$risk_aversion),
+                               mco.lambda,
+                               objective$risk_aversion
+                               )
         }
       }
       
-      # outputs
-      if (risk == "sd") {
-        risk <- sqrt(t(w) %*% cov(R) %*% w)
-        
-        # min volatility
-        if (is.null(reward)) return(risk)
-        
-        # max Sharpe
-        if (is.null(lambda)) return(risk/reward)
-        
-        # min quadratic utility
-        return(risk - lambda * reward)
+      # temp portfolio
+      mco.portfolio <- R %*% w
+      
+      # risk calculation
+      if (mco.risk == 1) {
+        mco.VaR <- quantile(mco.portfolio, mco.alpha)
+        mco.output.risk <- - mean(mco.portfolio[which(mco.portfolio <= mco.VaR)])
+      } 
+      if (mco.risk == 2) {
+        mco.output.risk <- sd(mco.portfolio)
+        if (mco.lambda) {
+          mco.output.risk <- mco.output.risk - mco.lambda * mean(mco.portfolio)
+        }
       }
       
-      if (risk == "ES"){
-        port.return <- R %*% w
-        VaR <- quantile(x = port.return, 
-                        probs = alpha)
-        risk <- mean(
-          port.return[which(port.return <= VaR)]
-        )
-        
-        # min ES
-        if (is.null(reward)) return(risk)
-        
-        # max STARR 
-        return(reward / risk)
-      }
+      # negative return portfolio
+      if (mean(mco.portfolio) < 0) return(Inf)
       
-      else {
-        return(- R %*% w)
+      # output
+      if (mco.return) {
+        if (mco.risk) {
+          return(mco.output.risk/mean(mco.portfolio))
+        }
+        return(-mean(mco.portfolio))
       }
+      return(mco.output.risk)
     }
     
     # input dimension 
