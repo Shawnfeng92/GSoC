@@ -1550,11 +1550,6 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         Rglpk.dir <- c(Rglpk.dir, rep(">=", T))
         Rglpk.rhs <- c(Rglpk.rhs, rep(0, T))
         
-        View(Rglpk.obj)
-        View(Rglpk.mat)
-        View(Rglpk.rhs)
-        View(Rglpk.bound)
-        
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
           obj = Rglpk.obj,
@@ -1587,11 +1582,18 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         # box constraint
         Rglpk.mat <- rbind(
           Rglpk.mat, 
-          cbind(diag(1, N), matrix(0, N, T), - lower),
-          cbind(diag(1, N), matrix(0, N, T), - upper)
+          cbind(diag(1, N), matrix(0, N, T + 1), - lower),
+          cbind(diag(1, N), matrix(0, N, T + 1), - upper)
           )
-        Rglpk.dir <- c(">=","<=")
-        Rglpk.rhs <- c(0, 0)
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", N), rep("<=", N))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, 2 * N))
+        
+        Rglpk.bound <- list(
+          lower = list(ind = c(1:N, N + T + 1),
+                       val = c(rep(-Inf, N), - Inf)),
+          upper = list(ind = c(1:N, N + T + 1),
+                       val = c(rep(Inf, N), Inf))
+        )
         
         # group constraint
         if (!is.null(constraints$groups)) {
@@ -1605,14 +1607,14 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           for (i in 1:length(constraints$groups)) {
             # temp index variable
             # low level
-            temp <- c(rep(0, N + T + 1), -cLO[i])
+            temp <- c(rep(0, N + T + 1), -constraints$cLO[i])
             temp[constraints$groups[[i]]] <- 1
             Rglpk.mat <- rbind(Rglpk.mat, temp)
             Rglpk.dir <- c(Rglpk.dir, ">=")
             Rglpk.rhs <- c(Rglpk.rhs, 0)
             
             # up level
-            temp <- c(rep(0, N + T + 1), -cUP[i])
+            temp <- c(rep(0, N + T + 1), -constraints$cUP[i])
             temp[constraints$groups[[i]]] <- 1
             Rglpk.mat <- rbind(Rglpk.mat, temp)
             Rglpk.dir <- c(Rglpk.dir, "<=")
@@ -1622,24 +1624,37 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, 
-                           c(rep(0, N + T + 1)),
-                           ifelse(
-                             is.null(constraints$return_target),
-                             target, 
-                             max(target, constraints$return_target))
-                           )
-        
-        Rglpk.dir <- c(Rglpk.dir, "<=")
-        Rglpk.rhs <- c(Rglpk.rhs, 1)
+        if (!is.infinite(target)) {
+          Rglpk.mat <- rbind(Rglpk.mat, 
+                             c(rep(0, N + T + 1)),
+                             target
+          )
+          
+          Rglpk.dir <- c(Rglpk.dir, "<=")
+          Rglpk.rhs <- c(Rglpk.rhs, 1)
+        }
         
         # shrinkage constraint
         Rglpk.mat <- rbind(Rglpk.mat, 
-                           c(rep(1, N), rep(0, T + 2))
+                           c(colMeans(returns), rep(0, T + 2))
                            )
         
         Rglpk.dir <- c(Rglpk.dir, "==")
         Rglpk.rhs <- c(Rglpk.rhs, 1)
+        
+        # scenario constraint
+        Rglpk.mat <- rbind(Rglpk.mat,
+                           cbind(
+                             matrix(returns, T),
+                             diag(1, T),
+                             rep(1, T),
+                             rep(0, T)
+                           )
+        )
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", T))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, T))
+        
+        
         
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
@@ -1728,12 +1743,12 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, c(colMeans(R), rep(0, N)))
-        Rglpk.dir <- c(Rglpk.dir, ">=")
-        Rglpk.rhs <- c(Rglpk.rhs, 
-                           ifelse(is.null(constraints$return_target),
-                                  target, 
-                                  max(target, constraints$return_target)))
+        if (!is.infinite(target))
+        {
+          Rglpk.mat <- rbind(Rglpk.mat, c(colMeans(R), rep(0, N)))
+          Rglpk.dir <- c(Rglpk.dir, ">=")
+          Rglpk.rhs <- c(Rglpk.rhs,target)
+        }
         
         # position limitation constraint
         if (!is.null(constraints$max_pos)) {
@@ -1746,8 +1761,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
             cbind(diag(1, N), diag(- upper, N)), 
             cbind(diag(1, N), diag(- lower, N))
             )
-          Rglpk.dir <- c(Rglpk.dir, "<=", ">=")
-          Rglpk.rhs <- c(Rglpk.rhs, 0, 0)
+          Rglpk.dir <- c(Rglpk.dir, rep("<=", N), rep(">=", N))
+          Rglpk.rhs <- c(Rglpk.rhs, rep(0, 2 * N))
         }
         
         # result from solver
@@ -1760,6 +1775,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           types = c(rep("C", N), rep("B", N)),
           max = TRUE
         )
+        
+        return(Rglpk.result)
       }
       
       # min VaR case
@@ -1832,13 +1849,12 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, 
-                           c(colMeans(R), rep(0, N + T + 1)))
-        Rglpk.dir <- c(Rglpk.dir, ">=")
-        Rglpk.rhs <- c(Rglpk.rhs, 
-                       ifelse(is.null(constraints$return_target),
-                              target, 
-                              max(target, constraints$return_target)))
+        if (!is.infinite(target)) {
+          Rglpk.mat <- rbind(Rglpk.mat, 
+                             c(colMeans(R), rep(0, N + T + 1)))
+          Rglpk.dir <- c(Rglpk.dir, ">=")
+          Rglpk.rhs <- c(Rglpk.rhs, target)
+        }
         
         # position limitation constraint
         if (!is.null(constraints$max_pos)) {
@@ -1857,9 +1873,20 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
                   matrix(0, N, T + 1),
                   diag(- lower, N))
           )
-          Rglpk.dir <- c(Rglpk.dir, "<=", ">=")
-          Rglpk.rhs <- c(Rglpk.rhs, 0, 0)
+          Rglpk.dir <- c(Rglpk.dir, rep("<=", N), rep(">=", N))
+          Rglpk.rhs <- c(Rglpk.rhs, rep(0, 2 * N))
         }
+        
+        # scenario constraint
+        Rglpk.mat <- rbind(Rglpk.mat, 
+                           cbind(
+                             matrix(R, T),
+                             diag(1, T),
+                             rep(1, T),
+                             matrix(0, T, N)
+                           ))
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", T))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, T))
         
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
@@ -1871,6 +1898,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           types = c(rep("C", N + T + 1), rep("B", N)),
           max = TRUE
         )
+        return(Rglpk.result)
       }
       
       # min ratio
@@ -1895,11 +1923,19 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         # box constraint
         Rglpk.mat <- rbind(
           Rglpk.mat, 
-          cbind(diag(1, N), matrix(0, N, T), - lower, diag(0, N)),
-          cbind(diag(1, N), matrix(0, N, T), - upper, diag(0, N))
+          cbind(diag(1, N), matrix(0, N, T + 1), - lower, diag(0, N)),
+          cbind(diag(1, N), matrix(0, N, T + 1), - upper, diag(0, N))
         )
-        Rglpk.dir <- c(">=","<=")
-        Rglpk.rhs <- c(0, 0)
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", N), rep("<=", N))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, 2 * N))
+        
+        # box constraint
+        Rglpk.bound <- list(
+          lower = list(ind = c(1:N, N + T + 1),
+                       val = rep(- Inf, N + 1)),
+          upper = list(ind = c(1:N, N + T + 1),
+                       val = rep(Inf, N + 1)) 
+        )
         
         # group constraint
         if (!is.null(constraints$groups)) {
@@ -1946,23 +1982,21 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
         
         # return target constraint
-        Rglpk.mat <- rbind(Rglpk.mat, 
-                           c(rep(0, N + T + 1)),
-                           ifelse(
-                             is.null(constraints$return_target),
-                             target, 
-                             max(target, constraints$return_target)),
-                           rep(0, N)
-        )
-        
-        Rglpk.dir <- c(Rglpk.dir, "<=")
-        Rglpk.rhs <- c(Rglpk.rhs, 1)
+        if (!is.infinite(target)) {
+          Rglpk.mat <- rbind(Rglpk.mat, 
+                             c(rep(0, N + T + 1)),
+                             target,
+                             rep(0, N)
+          )
+          
+          Rglpk.dir <- c(Rglpk.dir, "<=")
+          Rglpk.rhs <- c(Rglpk.rhs, 1)
+        }
         
         # shrinkage constraint
         Rglpk.mat <- rbind(Rglpk.mat, 
                            c(colMeans(R), rep(0, T + N + 2))
-        )
-        
+        ) 
         Rglpk.dir <- c(Rglpk.dir, "==")
         Rglpk.rhs <- c(Rglpk.rhs, 1)
         
@@ -1978,14 +2012,25 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
             Rglpk.mat, 
             cbind(diag(1, N),
                   matrix(0, N, T + 2),
-                  diag(- upper, N)), 
+                  diag(- upper - 9999, N)), 
             cbind(diag(1, N),
                   matrix(0, N, T + 2),
-                  diag(- lower, N))
+                  diag(- lower + 9999, N))
           )
-          Rglpk.dir <- c(Rglpk.dir, "<=", ">=")
-          Rglpk.rhs <- c(Rglpk.rhs, 0, 0)
+          Rglpk.dir <- c(Rglpk.dir, rep("<=", N), rep(">=", N))
+          Rglpk.rhs <- c(Rglpk.rhs, rep(0, N), rep(0, N))
         }
+        
+        # scenario constraint
+        Rglpk.mat <- rbind(Rglpk.mat, 
+                           cbind(
+                             matrix(R, T),
+                             diag(1, T),
+                             rep(1, T),
+                             matrix(0, T, N + 1)
+                           ))
+        Rglpk.dir <- c(Rglpk.dir, rep(">=", T))
+        Rglpk.rhs <- c(Rglpk.rhs, rep(0, T))
         
         # result from solver
         Rglpk.result <- Rglpk_solve_LP(
@@ -1997,6 +2042,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           types = c(rep("C", N + T + 2), rep("B", N)),
           max = TRUE
         )
+        
+        return(Rglpk.result)
       }
     }
   } ## end case for Rglpk
