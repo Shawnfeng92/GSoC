@@ -1,8 +1,8 @@
 # ====
-
+rm(list = ls())
 library(PortfolioAnalytics)
-library(osqp)
 library(Rglpk)
+library(osqp)
 library(mco)
 
 source(file = "GitHub/GSoC/code/Test/optimize.portfolio.R")
@@ -17,6 +17,11 @@ rm(
   optimize.portfolio.rebalancing,
   optimize.portfolio_v1
 )
+
+ES <- function(d) {
+  VaR <- quantile(d, 0.05)
+  return(mean(d[which(d <= VaR)]))
+}
 
 # ====
 pspec <- portfolio.spec(assets = colnames(returns))
@@ -46,15 +51,15 @@ pspec <- add.constraint(
 # pspec <- add.constraint(
 #   portfolio = pspec,
 #   type = "return",
-#   return_target = 0.05
+#   return_target = 0.005
 # )
 
-pspec <- add.objective(pspec, type = "return", name = "mean")
-# pspec <- add.objective(pspec, type = "risk", name = "StdDev")
+# pspec <- add.objective(pspec, type = "return", name = "mean")
+pspec <- add.objective(pspec, type = "risk", name = "ES")
 
-osqp.result <- optimize.portfolio(
+Rglpk.result <- optimize.portfolio(
   R = returns, portfolio = pspec,
-  optimize_method = "osqp", trace = FALSE,
+  optimize_method = "Rglpk", trace = FALSE,
   message = FALSE
 )
 
@@ -70,6 +75,18 @@ pso.result <- optimize.portfolio(
   message = FALSE
 )
 
-sqrt(t(mco.result$weights) %*% cov(returns) %*% mco.result$weights)
-sqrt(t(pso.result$weights) %*% cov(returns) %*% pso.result$weights)
-sqrt(t(osqp.result$x) %*% cov(returns) %*% osqp.result$x)
+mco.portfolio <- returns %*% mco.result$weights
+pso.portfolio <- returns %*% pso.result$weights
+Rglpk.portfolio <- returns %*% Rglpk.result$solution[1:13]
+
+mean(mco.portfolio)
+mean(Rglpk.portfolio)
+mean(pso.portfolio)
+
+ES(mco.portfolio)
+ES(Rglpk.portfolio)
+ES(pso.portfolio)
+
+mean(pso.portfolio) / ES(pso.portfolio)
+mean(Rglpk.portfolio) / ES(Rglpk.portfolio)
+mean(mco.portfolio) / ES(mco.portfolio)
