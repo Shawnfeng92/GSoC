@@ -4,6 +4,8 @@ library(PortfolioAnalytics)
 library(Rglpk)
 library(osqp)
 library(mco)
+library(doSNOW)
+library(doParallel)
 
 source(file = "GitHub/GSoC/code/Test/optimize.portfolio.R")
 
@@ -33,8 +35,8 @@ pspec <- add.constraint(
 pspec <- add.constraint(
   portfolio = pspec,
   type = "box",
-  min = rep(-0.1, 13),
-  max = 1:13/10
+  min = rep(-0.2, 13),
+  max = 1:13 / 13 * 2
 )
 
 pspec <- add.constraint(
@@ -48,45 +50,33 @@ pspec <- add.constraint(
   group_max = c(0.5, 0.6)
 )
 
-pspec <- add.constraint(
-  portfolio = pspec,
-  type = "position_limit",
-  max_pos = 5
-)
+# pspec <- add.objective(pspec, type = "return", name = "mean")
+pspec <- add.objective(pspec, type = "risk", name = "ES")
 
-pspec <- add.objective(pspec, type = "return", name = "mean")
-# pspec <- add.objective(pspec, type = "risk", name = "ES")
+solvers <- c("Rglpk", "mco", "GenSA", "DEoptim", "pso", "random")
 
-Rglpk.result <- optimize.portfolio(
-  R = returns, portfolio = pspec,
-  optimize_method = "Rglpk", trace = FALSE,
-  message = FALSE
-)
+registerDoParallel(16)
 
-mco.result <- optimize.portfolio(
-  R = returns, portfolio = pspec,
-  optimize_method = "mco", trace = FALSE,
-  message = FALSE
-)
+results <- foreach(
+  i = solvers, .combine = "rbind",
+  .packages = c(
+    "PortfolioAnalytics",
+    "osqp", "Rglpk", "mco"
+  )
+) %dopar% {
+  optimize.portfolio(
+    R = returns, portfolio = pspec,
+    optimize_method = i, trace = FALSE,
+    message = FALSE
+  )$weights
+}
+stopImplicitCluster()
 
-pso.result <- optimize.portfolio(
-  R = returns, portfolio = pspec,
-  optimize_method = "pso", trace = FALSE,
-  message = FALSE
-)
+rownames(results) <- solvers
 
-mco.portfolio <- returns %*% mco.result$weights
-pso.portfolio <- returns %*% pso.result$weights
-Rglpk.portfolio <- returns %*% Rglpk.result$solution[1:13]
-
-mean(mco.portfolio)
-mean(Rglpk.portfolio)
-mean(pso.portfolio)
-
-ES(mco.portfolio)
-ES(Rglpk.portfolio)
-ES(pso.portfolio)
-
-mean(pso.portfolio) / ES(pso.portfolio)
-mean(Rglpk.portfolio) / ES(Rglpk.portfolio)
-mean(mco.portfolio) / ES(mco.portfolio)
+for (i in 1:6) {
+  print(PortfolioAnalytics:::check_constraints(results[i,], pspec))
+  t <- returns %*% results[i,]  
+  print(ES(t))
+  rm(t)
+}
