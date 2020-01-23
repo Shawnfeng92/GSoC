@@ -25,22 +25,25 @@ ES <- function(d) {
   return(mean(d[which(d <= VaR)]))
 }
 
-# ====
-pspec <- portfolio.spec(assets = colnames(returns))
-pspec <- add.constraint(
-  portfolio = pspec, type = "weight_sum",
+# LP optimization ====
+# asset information
+pspec.ES <- portfolio.spec(assets = colnames(returns))
+
+# constraints: leverage, box, group
+pspec.ES <- add.constraint(
+  portfolio = pspec.ES, type = "weight_sum",
   min_sum = -0.5, max_sum = 1
 )
 
-pspec <- add.constraint(
-  portfolio = pspec,
+pspec.ES <- add.constraint(
+  portfolio = pspec.ES,
   type = "box",
   min = rep(-0.2, 13),
   max = 1:13 / 13 * 2
 )
 
-pspec <- add.constraint(
-  portfolio = pspec,
+pspec.ES <- add.constraint(
+  portfolio = pspec.ES,
   type = "group",
   groups = list(
     c(1, 2, 3),
@@ -50,20 +53,18 @@ pspec <- add.constraint(
   group_max = c(0.5, 0.6)
 )
 
-pspec <- add.constraint(
-  pspec, "position_limitation",
-  max_pos = 5
-)
+# objectives: mean as return, ES as risk
+pspec.ES <- add.objective(pspec.ES, type = "return", name = "mean")
+pspec.ES <- add.objective(pspec.ES, type = "risk", name = "ES")
 
-# pspec <- add.objective(pspec, type = "return", name = "mean")
-pspec <- add.objective(pspec, type = "risk", name = "ES")
+# linear programming solvers
+LP.solvers <- c("Rglpk", "mco", "GenSA", "DEoptim", "pso", "random")
 
-solvers <- c("Rglpk", "mco", "GenSA", "DEoptim", "pso", "random")
+# parallel solution
+registerDoParallel(8)
 
-registerDoParallel(16)
-
-results <- foreach(
-  i = solvers, .combine = "rbind",
+LP.results <- foreach(
+  i = LP.solvers, .combine = "rbind",
   .packages = c(
     "PortfolioAnalytics",
     "osqp", "Rglpk", "mco"
@@ -71,7 +72,7 @@ results <- foreach(
 ) %dopar% {
   rtime <- system.time(
     weight <- optimize.portfolio(
-      R = returns, portfolio = pspec,
+      R = returns, portfolio = pspec.ES,
       optimize_method = i, trace = FALSE,
       message = FALSE
     )$weights
@@ -79,20 +80,90 @@ results <- foreach(
 
   portfolio <- returns %*% weight
   p.ES <- ES(portfolio)
-  p.sd <- sd(portfolio)
   p.mean <- mean(portfolio)
   r <- c(
-    p.mean, p.sd, p.ES, p.mean / p.sd, p.mean / p.ES,
+    p.mean, p.ES, p.mean / p.ES,
     rtime["elapsed"], weight
   )
   r
 }
 stopImplicitCluster()
 
-rownames(results) <- solvers
-colnames(results) <- c(
-  "mean", "sd", "ES", "Sharpe",
+# results style
+rownames(LP.results) <- LP.solvers
+colnames(LP.results) <- c(
+  "mean", "ES",
   "STARR", "time", colnames(returns)
 )
 
-round(results, 2)
+# QP optimization ====
+# asset information
+pspec.sd <- portfolio.spec(assets = colnames(returns))
+
+# constraints: leverage, box, group
+pspec.sd <- add.constraint(
+  portfolio = pspec.sd, type = "weight_sum",
+  min_sum = -0.5, max_sum = 1
+)
+
+pspec.sd <- add.constraint(
+  portfolio = pspec.sd,
+  type = "box",
+  min = rep(-0.2, 13),
+  max = 1:13 / 13 * 2
+)
+
+pspec.sd <- add.constraint(
+  portfolio = pspec.sd,
+  type = "group",
+  groups = list(
+    c(1, 2, 3),
+    c(4, 5, 6)
+  ),
+  group_min = c(0, 0.1),
+  group_max = c(0.5, 0.6)
+)
+
+# objectives: mean as return, ES as risk
+pspec.sd <- add.objective(pspec.sd, type = "return", name = "mean")
+pspec.sd <- add.objective(pspec.sd, type = "risk", name = "StdDev")
+
+# linear programming solvers
+QP.solvers <- c("osqp", "mco", "GenSA", "DEoptim", "pso", "random")
+
+# parallel solution
+registerDoParallel(8)
+
+QP.results <- foreach(
+  i = QP.solvers, .combine = "rbind",
+  .packages = c(
+    "PortfolioAnalytics",
+    "osqp", "Rglpk", "mco"
+  )
+) %dopar% {
+  rtime <- system.time(
+    weight <- optimize.portfolio(
+      R = returns, portfolio = pspec.sd,
+      optimize_method = i, trace = FALSE,
+      message = FALSE
+    )$weights
+  )
+
+  portfolio <- returns %*% weight
+  p.sd <- sd(portfolio)
+  p.mean <- mean(portfolio)
+  r <- c(
+    p.mean, p.sd, p.mean / p.sd,
+    rtime["elapsed"], weight
+  )
+  r
+}
+stopImplicitCluster()
+
+# results style
+rownames(QP.results) <- QP.solvers
+colnames(QP.results) <- c(
+  "mean", "sd", "Sharpe",
+  "time", colnames(returns)
+)
+
