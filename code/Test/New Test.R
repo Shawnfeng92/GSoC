@@ -7,7 +7,7 @@ library(mco)
 library(doSNOW)
 library(doParallel)
 
-source(file = "GitHub/GSoC/code/Test/optimize.portfolio.R")
+source(file = "optimize.portfolio.R")
 
 data(edhec)
 returns <- edhec
@@ -50,6 +50,11 @@ pspec <- add.constraint(
   group_max = c(0.5, 0.6)
 )
 
+pspec <- add.constraint(
+  pspec, "position_limitation",
+  max_pos = 5
+)
+
 # pspec <- add.objective(pspec, type = "return", name = "mean")
 pspec <- add.objective(pspec, type = "risk", name = "ES")
 
@@ -64,19 +69,30 @@ results <- foreach(
     "osqp", "Rglpk", "mco"
   )
 ) %dopar% {
-  optimize.portfolio(
-    R = returns, portfolio = pspec,
-    optimize_method = i, trace = FALSE,
-    message = FALSE
-  )$weights
+  rtime <- system.time(
+    weight <- optimize.portfolio(
+      R = returns, portfolio = pspec,
+      optimize_method = i, trace = FALSE,
+      message = FALSE
+    )$weights
+  )
+
+  portfolio <- returns %*% weight
+  p.ES <- ES(portfolio)
+  p.sd <- sd(portfolio)
+  p.mean <- mean(portfolio)
+  r <- c(
+    p.mean, p.sd, p.ES, p.mean / p.sd, p.mean / p.ES,
+    rtime["elapsed"], weight
+  )
+  r
 }
 stopImplicitCluster()
 
 rownames(results) <- solvers
+colnames(results) <- c(
+  "mean", "sd", "ES", "Sharpe",
+  "STARR", "time", colnames(returns)
+)
 
-for (i in 1:6) {
-  print(PortfolioAnalytics:::check_constraints(results[i,], pspec))
-  t <- returns %*% results[i,]  
-  print(ES(t))
-  rm(t)
-}
+round(results, 2)
