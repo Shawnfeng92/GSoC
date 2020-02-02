@@ -1364,7 +1364,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       requireNamespace("Rglpk", quietly = TRUE))
   
     # Rglpk solver can only solve linear programming problems
-    valid_objnames <- c("mean", "CVaR", "ES", "ETL")
+    valid_objnames <- c("mean", "CVaR", "ES", "ETL", "MAD")
   
     # default setting
     target <- -Inf
@@ -1390,7 +1390,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
   
         # optimization objective function
         reward <- ifelse(objective$name == "mean", TRUE, reward)
-        risk <- ifelse(objective$name %in% valid_objnames[2:4], TRUE, risk)
+        risk <- ifelse(objective$name %in% valid_objnames[2:4], 1, risk)
+        risk <- ifelse(objective$name %in% valid_objnames[5], 2, risk)
         arguments <- objective$arguments
       }
     }
@@ -1523,7 +1524,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       }
   
       # min CVaR case
-      else if (risk & !reward) {
+      else if (risk == 1 & !reward) {
         # utility function coef: weight + loss + VaR
         Rglpk.obj <- c(
           rep(0, N),
@@ -1636,8 +1637,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
       }
   
-      # max ratio
-      else if (risk & reward) {
+      # max STARR ratio
+      else if (risk == 1 & reward) {
         # utility function coef: weight + loss + VaR + shrinkage
         Rglpk.obj <- c(
           rep(0, N), # weight
@@ -1777,6 +1778,16 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         if (isTRUE(trace)) {
           out$Rglpkoutput <- Rglpk.result
         }
+      }
+      
+      # min MAD case
+      else if (risk == 2 & !reward) {
+        
+      }
+      
+      # max MAD ratio
+      else if (risk == 2 & !reward) {
+        
       }
     }
   
@@ -1925,7 +1936,7 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
       }
   
       # min VaR case
-      else if (risk & !reward) {
+      else if (risk == 1 & !reward) {
         # utility function coef: weight + loss + VaR + position index
         Rglpk.obj <- c(
           rep(0, N), # weight
@@ -2094,8 +2105,8 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
         }
       }
   
-      # min ratio
-      else if (risk & reward) {
+      # max STARR ratio
+      else if (risk == 1 & reward) {
         # utility function coef: weight + loss + VaR + shrinkage + position
         Rglpk.obj <- c(
           rep(0, N), # weight
@@ -2285,7 +2296,18 @@ optimize.portfolio <- optimize.portfolio_v2 <- function(
           out$Rglpkoutput <- Rglpk.result
         }
       }
+      
+      # min MAD case
+      else if (risk == 2 & !reward) {
+        
+      }
+      
+      # max MAD ratio
+      else if (risk == 2 & !reward) {
+        
+      }
     }
+    
   } ## end case for Rglpk
   
   ## case if method = osqp -- Operator Splitting Quadratic Program
